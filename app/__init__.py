@@ -1,6 +1,6 @@
 import os
 import logging
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, send_from_directory
 from .extensions import db, login_manager, csrf, limiter
 from config import Config
 
@@ -64,6 +64,11 @@ def create_app(config_class=Config):
     app.jinja_env.filters['format_time'] = format_time
     app.jinja_env.filters['render_mentions'] = render_mentions
 
+    # ── Uploads route (serves from UPLOAD_FOLDER, even if outside static/) ──
+    @app.route('/uploads/<path:filename>')
+    def uploaded_file(filename):
+        return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
     # ── Context processor (optimised: single query) ──────
     @app.context_processor
     def inject_notifications():
@@ -110,7 +115,7 @@ def create_app(config_class=Config):
             return jsonify(error='Too many requests. Please slow down.'), 429
         return render_template('errors/429.html'), 429
 
-    # ── Enable WAL mode for SQLite (better concurrency) ──
+    # ── Database init & upload folder ─────────────────────
     with app.app_context():
         db.create_all()
         os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
