@@ -1,0 +1,315 @@
+import secrets
+from datetime import datetime
+from flask import render_template, redirect, url_for, flash, abort, current_app, request
+from flask_login import login_required, current_user
+from . import bp
+from ..extensions import db
+from ..models import Group, GroupMember, GroupJoinRequest, BeerPost, BeerPostGroup, User
+from .forms import CreateGroupForm, EditGroupForm
+from ..posts.utils import process_upload
+
+
+@bp.route('/')
+@login_required
+def list_groups():
+    memberships = GroupMember.query.filter_by(user_id=current_user.id).all()
+    groups = [m.group for m in memberships]
+    return render_template('groups/list.html', groups=groups, active_nav='groups')
+
+
+@bp.route('/create', methods=['GET', 'POST'])
+@login_required
+def create():
+    form = CreateGroupForm()
+    if form.validate_on_submit():
+        avatar_filename = None
+        if form.avatar.data:
+            avatar_filename = process_upload(
+                form.avatar.data,
+                current_app.config['UPLOAD_FOLDER'],
+                max_size=(400, 400)
+            )
+
+        group = Group(
+            name=form.name.data,
+            description=form.description.data,
+            avatar_filename=avatar_filename,
+            invite_code=secrets.token_urlsafe(10),
+            created_by_id=current_user.id
+        )
+        db.session.add(group)
+        db.session.flush()
+
+        member = GroupMember(
+            user_id=current_user.id,
+            group_id=group.id,
+            role='admin'
+        )
+        db.session.add(member)
+        db.session.commit()
+
+        flash(f'Group "{group.name}" created!', 'success')
+        return redirect(url_for('groups.detail', id=group.id))
+
+    return render_template('groups/create.html', form=form)
+
+
+@bp.route('/<int:id>')
+@login_required
+def detail(id):
+    group = Group.query.get_or_404(id)
+    if not group.is_member(current_user):
+        abort(403)
+
+    membership = GroupMember.query.filter_by(
+        group_id=group.id, user_id=current_user.id
+    ).first()
+    membership.last_seen_at = datetime.utcnow()
+    db.session.commit()
+
+    is_admin = group.is_admin(current_user)
+
+    # Subquery: posts shared to this group
+    group_posts = db.session.query(
+        BeerPost.id.label('post_id'),
+        BeerPost.user_id,
+        BeerPost.drink_time_seconds,
+        BeerPost.created_at,
+    ).join(BeerPostGroup, BeerPostGroup.post_id == BeerPost.id).filter(
+        BeerPostGroup.group_id == group.id
+    ).subquery()
+
+    # Base: all members via outerjoin → user → group_posts
+    base = db.session.query(
+        User.id,
+        User.username,
+        User.display_name,
+        User.avatar_filename,
+    ).join(GroupMember, GroupMember.user_id == User.id).filter(
+        GroupMember.group_id == group.id
+    )
+
+    # 1) Fastest single time — min(drink_time), ASC, NULLs last
+    lb_fastest = base.outerjoin(
+        group_posts, group_posts.c.user_id == User.id
+    ).add_columns(
+        db.func.min(group_posts.c.drink_time_seconds).label('metric'),
+        db.func.count(group_posts.c.post_id).label('total_beers'),
+        db.func.max(group_posts.c.created_at).label('last_active'),
+    ).group_by(User.id).order_by(
+        db.case((db.func.min(group_posts.c.drink_time_seconds).is_(None), 1), else_=0),
+        db.asc(db.func.min(group_posts.c.drink_time_seconds))
+    ).all()
+
+    # 2) Most this month — count(posts) where created_at >= first of month, DESC
+    month_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    month_posts = db.session.query(
+        BeerPost.id.label('post_id'),
+        BeerPost.user_id,
+        BeerPost.created_at,
+    ).join(BeerPostGroup, BeerPostGroup.post_id == BeerPost.id).filter(
+        BeerPostGroup.group_id == group.id,
+        BeerPost.created_at >= month_start,
+    ).subquery()
+
+    lb_month = base.outerjoin(
+        month_posts, month_posts.c.user_id == User.id
+    ).add_columns(
+        db.func.count(month_posts.c.post_id).label('metric'),
+        db.func.count(month_posts.c.post_id).label('total_beers'),
+        db.func.max(month_posts.c.created_at).label('last_active'),
+    ).group_by(User.id).order_by(
+        db.desc(db.func.count(month_posts.c.post_id)),
+    ).all()
+
+    # 3) Fastest average — avg(drink_time), ASC, NULLs last
+    lb_average = base.outerjoin(
+        group_posts, group_posts.c.user_id == User.id
+    ).add_columns(
+        db.func.avg(group_posts.c.drink_time_seconds).label('metric'),
+        db.func.count(group_posts.c.post_id).label('total_beers'),
+        db.func.max(group_posts.c.created_at).label('last_active'),
+    ).group_by(User.id).order_by(
+        db.case((db.func.avg(group_posts.c.drink_time_seconds).is_(None), 1), else_=0),
+        db.asc(db.func.avg(group_posts.c.drink_time_seconds))
+    ).all()
+
+    # Recent posts
+    post_ids = db.session.query(BeerPostGroup.post_id).filter(
+        BeerPostGroup.group_id == group.id
+    )
+    posts = BeerPost.query.filter(BeerPost.id.in_(post_ids)).order_by(
+        BeerPost.created_at.desc()
+    ).limit(50).all()
+
+    pending_count = group.pending_request_count() if is_admin else 0
+
+    return render_template('groups/detail.html',
+                           group=group, posts=posts,
+                           is_admin=is_admin,
+                           pending_count=pending_count,
+                           lb_fastest=lb_fastest,
+                           lb_month=lb_month,
+                           lb_average=lb_average)
+
+
+@bp.route('/join/<invite_code>', methods=['GET', 'POST'])
+@login_required
+def join(invite_code):
+    group = Group.query.filter_by(invite_code=invite_code).first_or_404()
+
+    if group.is_member(current_user):
+        flash('You are already a member of this group.', 'info')
+        return redirect(url_for('groups.detail', id=group.id))
+
+    if request.method == 'POST':
+        member = GroupMember(
+            user_id=current_user.id,
+            group_id=group.id,
+            role='member'
+        )
+        db.session.add(member)
+        db.session.commit()
+        flash(f'You joined "{group.name}"!', 'success')
+        return redirect(url_for('groups.detail', id=group.id))
+
+    return render_template('groups/join.html', group=group)
+
+
+@bp.route('/<int:id>/leave', methods=['POST'])
+@login_required
+def leave(id):
+    group = Group.query.get_or_404(id)
+    membership = GroupMember.query.filter_by(
+        group_id=group.id, user_id=current_user.id
+    ).first()
+
+    if not membership:
+        abort(400)
+
+    db.session.delete(membership)
+    db.session.commit()
+    flash(f'You left "{group.name}".', 'success')
+    return redirect(url_for('groups.list_groups'))
+
+
+@bp.route('/<int:id>/manage', methods=['GET', 'POST'])
+@login_required
+def manage(id):
+    group = Group.query.get_or_404(id)
+    if not group.is_admin(current_user):
+        abort(403)
+
+    members = GroupMember.query.filter_by(group_id=group.id).all()
+    return render_template('groups/manage.html', group=group, members=members)
+
+
+@bp.route('/<int:id>/invite')
+@login_required
+def invite(id):
+    group = Group.query.get_or_404(id)
+    if not group.is_member(current_user):
+        abort(403)
+
+    is_admin = group.is_admin(current_user)
+    pending_requests = []
+    if is_admin:
+        pending_requests = GroupJoinRequest.query.filter_by(
+            group_id=group.id, status='pending'
+        ).all()
+
+    return render_template('groups/invite.html', group=group,
+                           is_admin=is_admin,
+                           pending_requests=pending_requests)
+
+
+@bp.route('/<int:id>/remove-member/<int:user_id>', methods=['POST'])
+@login_required
+def remove_member(id, user_id):
+    group = Group.query.get_or_404(id)
+    if not group.is_admin(current_user):
+        abort(403)
+    if user_id == current_user.id:
+        abort(400)
+
+    membership = GroupMember.query.filter_by(
+        group_id=group.id, user_id=user_id
+    ).first_or_404()
+
+    db.session.delete(membership)
+    db.session.commit()
+    flash('Member removed.', 'success')
+    return redirect(url_for('groups.manage', id=group.id))
+
+
+@bp.route('/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit(id):
+    group = Group.query.get_or_404(id)
+    if not group.is_admin(current_user):
+        abort(403)
+
+    form = EditGroupForm(obj=group)
+    if form.validate_on_submit():
+        group.name = form.name.data
+        group.description = form.description.data
+        if form.avatar.data:
+            group.avatar_filename = process_upload(
+                form.avatar.data,
+                current_app.config['UPLOAD_FOLDER'],
+                max_size=(400, 400)
+            )
+        db.session.commit()
+        flash('Group updated!', 'success')
+        return redirect(url_for('groups.detail', id=group.id))
+
+    return render_template('groups/edit.html', form=form, group=group)
+
+
+@bp.route('/<int:id>/approve-request/<int:request_id>', methods=['POST'])
+@login_required
+def approve_request(id, request_id):
+    group = Group.query.get_or_404(id)
+    if not group.is_admin(current_user):
+        abort(403)
+
+    join_req = GroupJoinRequest.query.get_or_404(request_id)
+    if join_req.group_id != group.id or join_req.status != 'pending':
+        abort(400)
+
+    join_req.status = 'accepted'
+    member = GroupMember(user_id=join_req.user_id, group_id=group.id, role='member')
+    db.session.add(member)
+    db.session.commit()
+    flash(f'{join_req.user.display_name} has been added to the group.', 'success')
+    return redirect(url_for('groups.invite', id=group.id))
+
+
+@bp.route('/<int:id>/reject-request/<int:request_id>', methods=['POST'])
+@login_required
+def reject_request(id, request_id):
+    group = Group.query.get_or_404(id)
+    if not group.is_admin(current_user):
+        abort(403)
+
+    join_req = GroupJoinRequest.query.get_or_404(request_id)
+    if join_req.group_id != group.id or join_req.status != 'pending':
+        abort(400)
+
+    join_req.status = 'rejected'
+    db.session.commit()
+    flash('Request rejected.', 'success')
+    return redirect(url_for('groups.invite', id=group.id))
+
+
+@bp.route('/<int:id>/delete', methods=['POST'])
+@login_required
+def delete(id):
+    group = Group.query.get_or_404(id)
+    if not group.is_admin(current_user):
+        abort(403)
+    name = group.name
+    db.session.delete(group)
+    db.session.commit()
+    flash(f'Group "{name}" deleted.', 'success')
+    return redirect(url_for('groups.list_groups'))

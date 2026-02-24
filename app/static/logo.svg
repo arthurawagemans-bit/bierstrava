@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <!-- Background circle -->
+  <circle cx="60" cy="60" r="56" fill="#800020"/>
+  <!-- Beer glass body -->
+  <rect x="38" y="32" width="32" height="48" rx="4" fill="none" stroke="white" stroke-width="4"/>
+  <!-- Glass handle -->
+  <path d="M70 42 h8 a6 6 0 0 1 0 24 h-8" fill="none" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <!-- Beer foam -->
+  <path d="M38 44 Q44 36 50 42 Q56 36 62 42 Q68 36 70 44" fill="white" stroke="white" stroke-width="2"/>
+  <!-- Lightning bolt (speed/strava element) -->
+  <polygon points="56,50 48,64 54,64 50,78 64,60 58,60 62,50" fill="#f4a9ba"/>
+</svg>

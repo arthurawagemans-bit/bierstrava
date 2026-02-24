@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+{% from "components/post_card.html" import render_post %}
+{% block title %}{{ group.name }} - BierStrava{% endblock %}
+
+{% block head %}
+<meta name="csrf-token" content="{{ csrf_token() }}">
+{% endblock %}
+
+{% block content %}
+<!-- Compact Banner -->
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 px-4 py-3 mb-4 flex items-center gap-3 relative">
+    {% if group.avatar_filename %}
+    <img src="{{ url_for('static', filename='uploads/' + group.avatar_filename) }}"
+         class="w-10 h-10 rounded-xl object-cover flex-shrink-0">
+    {% else %}
+    <div class="w-10 h-10 rounded-xl bg-maroon-100 flex items-center justify-center flex-shrink-0">
+        <span class="text-maroon text-sm font-bold">{{ group.name[0]|upper }}</span>
+    </div>
+    {% endif %}
+    <div class="flex-1 min-w-0">
+        <h1 class="text-base font-bold truncate">{{ group.name }}</h1>
+        {% if group.description %}
+        <p class="text-[11px] text-gray-400 truncate">{{ group.description }}</p>
+        {% endif %}
+    </div>
+    <!-- Gear icon -->
+    <button id="gear-btn" class="relative p-2 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        {% if is_admin and pending_count %}
+        <span class="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">{{ pending_count }}</span>
+        {% endif %}
+    </button>
+
+    <!-- Settings Dropdown -->
+    <div id="gear-dropdown" class="hidden absolute right-4 top-14 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-30 min-w-[160px]">
+        <a href="{{ url_for('groups.invite', id=group.id) }}"
+           class="flex items-center justify-between px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+            <span>Invite people</span>
+            {% if is_admin and pending_count %}
+            <span class="bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">{{ pending_count }}</span>
+            {% endif %}
+        </a>
+        {% if is_admin %}
+        <a href="{{ url_for('groups.manage', id=group.id) }}"
+           class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+            Manage members
+        </a>
+        <a href="{{ url_for('groups.edit', id=group.id) }}"
+           class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+            Edit group
+        </a>
+        {% endif %}
+        <form method="POST" action="{{ url_for('groups.leave', id=group.id) }}"
+              onsubmit="return confirm('Leave this group?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit"
+                    class="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors">
+                Leave group
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Leaderboard Tabs -->
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-4">
+    <div class="flex gap-1 p-2 bg-gray-50">
+        <button class="lb-tab flex-1 text-xs font-semibold py-2 rounded-lg bg-maroon text-white transition-colors"
+                data-target="lb-fastest">Fastest</button>
+        <button class="lb-tab flex-1 text-xs font-semibold py-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
+                data-target="lb-month">This Month</button>
+        <button class="lb-tab flex-1 text-xs font-semibold py-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
+                data-target="lb-average">Average</button>
+    </div>
+
+    <!-- Fastest Time Leaderboard -->
+    <div id="lb-fastest" class="lb-panel">
+        {% if lb_fastest %}
+        <div class="divide-y divide-gray-50">
+            {% for entry in lb_fastest %}
+            <a href="{{ url_for('profiles.view', username=entry.username) }}"
+               class="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors">
+                {% if entry.metric is not none %}
+                <span class="w-6 text-center text-sm font-bold {{ 'text-yellow-500' if loop.index == 1 else 'text-gray-400' if loop.index == 2 else 'text-orange-400' if loop.index == 3 else 'text-gray-300' }}">
+                    {{ loop.index }}
+                </span>
+                {% else %}
+                <span class="w-6 text-center text-sm text-gray-300">–</span>
+                {% endif %}
+                {% if entry.avatar_filename %}
+                <img src="{{ url_for('static', filename='uploads/' + entry.avatar_filename) }}"
+                     class="w-8 h-8 rounded-full object-cover flex-shrink-0">
+                {% else %}
+                <div class="w-8 h-8 rounded-full bg-maroon-100 flex items-center justify-center flex-shrink-0">
+                    <span class="text-maroon text-xs font-bold">{{ entry.display_name[0]|upper }}</span>
+                </div>
+                {% endif %}
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-900 truncate">{{ entry.display_name }}</p>
+                    <p class="text-[11px] text-gray-400">{{ entry.total_beers }} bier{{ 's' if entry.total_beers != 1 }}{% if entry.last_active %} · {{ entry.last_active|timeago }}{% endif %}</p>
+                </div>
+                {% if entry.metric is not none %}
+                <span class="time-badge text-xs font-bold px-2.5 py-1 rounded-full">
+                    {{ entry.metric|format_time }}
+                </span>
+                {% else %}
+                <span class="text-xs text-gray-300 font-bold px-2.5 py-1">--</span>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-center text-sm text-gray-400 py-8">No members yet</p>
+        {% endif %}
+    </div>
+
+    <!-- This Month Leaderboard -->
+    <div id="lb-month" class="lb-panel hidden">
+        {% if lb_month %}
+        <div class="divide-y divide-gray-50">
+            {% for entry in lb_month %}
+            <a href="{{ url_for('profiles.view', username=entry.username) }}"
+               class="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors">
+                {% if entry.metric > 0 %}
+                <span class="w-6 text-center text-sm font-bold {{ 'text-yellow-500' if loop.index == 1 else 'text-gray-400' if loop.index == 2 else 'text-orange-400' if loop.index == 3 else 'text-gray-300' }}">
+                    {{ loop.index }}
+                </span>
+                {% else %}
+                <span class="w-6 text-center text-sm text-gray-300">–</span>
+                {% endif %}
+                {% if entry.avatar_filename %}
+                <img src="{{ url_for('static', filename='uploads/' + entry.avatar_filename) }}"
+                     class="w-8 h-8 rounded-full object-cover flex-shrink-0">
+                {% else %}
+                <div class="w-8 h-8 rounded-full bg-maroon-100 flex items-center justify-center flex-shrink-0">
+                    <span class="text-maroon text-xs font-bold">{{ entry.display_name[0]|upper }}</span>
+                </div>
+                {% endif %}
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-900 truncate">{{ entry.display_name }}</p>
+                    <p class="text-[11px] text-gray-400">{% if entry.last_active %}{{ entry.last_active|timeago }}{% else %}No activity{% endif %}</p>
+                </div>
+                {% if entry.metric > 0 %}
+                <span class="bg-maroon-50 text-maroon text-xs font-bold px-2.5 py-1 rounded-full">
+                    {{ entry.metric }}
+                </span>
+                {% else %}
+                <span class="text-xs text-gray-300 font-bold px-2.5 py-1">--</span>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-center text-sm text-gray-400 py-8">No members yet</p>
+        {% endif %}
+    </div>
+
+    <!-- Average Time Leaderboard -->
+    <div id="lb-average" class="lb-panel hidden">
+        {% if lb_average %}
+        <div class="divide-y divide-gray-50">
+            {% for entry in lb_average %}
+            <a href="{{ url_for('profiles.view', username=entry.username) }}"
+               class="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors">
+                {% if entry.metric is not none %}
+                <span class="w-6 text-center text-sm font-bold {{ 'text-yellow-500' if loop.index == 1 else 'text-gray-400' if loop.index == 2 else 'text-orange-400' if loop.index == 3 else 'text-gray-300' }}">
+                    {{ loop.index }}
+                </span>
+                {% else %}
+                <span class="w-6 text-center text-sm text-gray-300">–</span>
+                {% endif %}
+                {% if entry.avatar_filename %}
+                <img src="{{ url_for('static', filename='uploads/' + entry.avatar_filename) }}"
+                     class="w-8 h-8 rounded-full object-cover flex-shrink-0">
+                {% else %}
+                <div class="w-8 h-8 rounded-full bg-maroon-100 flex items-center justify-center flex-shrink-0">
+                    <span class="text-maroon text-xs font-bold">{{ entry.display_name[0]|upper }}</span>
+                </div>
+                {% endif %}
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-900 truncate">{{ entry.display_name }}</p>
+                    <p class="text-[11px] text-gray-400">{{ entry.total_beers }} bier{{ 's' if entry.total_beers != 1 }}{% if entry.last_active %} · {{ entry.last_active|timeago }}{% endif %}</p>
+                </div>
+                {% if entry.metric is not none %}
+                <span class="time-badge text-xs font-bold px-2.5 py-1 rounded-full">
+                    {{ entry.metric|format_time }}
+                </span>
+                {% else %}
+                <span class="text-xs text-gray-300 font-bold px-2.5 py-1">--</span>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-center text-sm text-gray-400 py-8">No members yet</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Group Posts -->
+<h3 class="text-sm font-semibold text-gray-700 mb-3">Recent Posts</h3>
+{% if posts %}
+    {% for post in posts %}
+        {{ render_post(post, current_user) }}
+    {% endfor %}
+{% else %}
+<div class="text-center py-10">
+    <p class="text-gray-400 text-sm mb-3">No posts in this group yet.</p>
+    <a href="{{ url_for('posts.create') }}" class="text-maroon text-sm font-medium">Post the first bier!</a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Gear dropdown toggle
+(function() {
+    var btn = document.getElementById('gear-btn');
+    var dropdown = document.getElementById('gear-dropdown');
+    btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        dropdown.classList.toggle('hidden');
+    });
+    document.addEventListener('click', function() {
+        dropdown.classList.add('hidden');
+    });
+    dropdown.addEventListener('click', function(e) {
+        e.stopPropagation();
+    });
+})();
+
+// Leaderboard tab switching
+(function() {
+    var tabs = document.querySelectorAll('.lb-tab');
+    var panels = document.querySelectorAll('.lb-panel');
+    tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+            tabs.forEach(function(t) {
+                t.classList.remove('bg-maroon', 'text-white');
+                t.classList.add('text-gray-500');
+            });
+            tab.classList.add('bg-maroon', 'text-white');
+            tab.classList.remove('text-gray-500');
+            panels.forEach(function(p) { p.classList.add('hidden'); });
+            document.getElementById(tab.dataset.target).classList.remove('hidden');
+        });
+    });
+})();
+</script>
+{% endblock %}

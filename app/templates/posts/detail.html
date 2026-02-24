@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block title %}{{ 'VDL' if post.is_vdl else post.drink_time_seconds|format_time }} by {{ post.author.display_name }} - BierStrava{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="flex items-center gap-3 mb-4">
+    <a href="{{ url_for('main.feed') }}" class="text-gray-500">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+    </a>
+    <h1 class="text-lg font-bold flex-1">Post</h1>
+    {% if post.user_id == current_user.id %}
+    <div class="flex items-center gap-1">
+        <a href="{{ url_for('posts.edit', id=post.id) }}" class="text-gray-400 hover:text-gray-600 p-1">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+            </svg>
+        </a>
+        <form method="POST" action="{{ url_for('posts.delete', id=post.id) }}"
+              onsubmit="return confirm('Delete this post?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="text-red-400 hover:text-red-600 p-1">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+            </button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Post Content -->
+<div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100 mb-4">
+    <!-- Author -->
+    <div class="flex items-center px-4 py-3">
+        <a href="{{ url_for('profiles.view', username=post.author.username) }}" class="flex-shrink-0">
+            {% if post.author.avatar_filename %}
+            <img src="{{ url_for('static', filename='uploads/' + post.author.avatar_filename) }}"
+                 class="w-10 h-10 rounded-full object-cover">
+            {% else %}
+            <div class="w-10 h-10 rounded-full bg-maroon-100 flex items-center justify-center">
+                <span class="text-maroon font-bold">{{ post.author.display_name[0]|upper }}</span>
+            </div>
+            {% endif %}
+        </a>
+        <div class="ml-3">
+            <a href="{{ url_for('profiles.view', username=post.author.username) }}"
+               class="font-semibold text-sm">{{ post.author.display_name }}</a>
+            <p class="text-xs text-gray-400">{{ post.created_at|timeago }}</p>
+        </div>
+    </div>
+
+    <!-- Photo (only if viewer has access) -->
+    {% if post.photo_visible_to(current_user) %}
+    <img src="{{ url_for('static', filename='uploads/' + post.photo_filename) }}"
+         class="w-full aspect-[4/3] object-cover">
+    {% elif post.photo_was_shared_with(current_user) %}
+    <div class="w-full py-10 bg-gray-50 flex flex-col items-center justify-center">
+        <svg class="w-10 h-10 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        <p class="text-sm text-gray-400">Photo was removed</p>
+    </div>
+    {% endif %}
+
+    <!-- Time -->
+    <div class="px-4 py-3 bg-gray-50/80">
+        {% if post.session_id and post.session %}
+        <div class="space-y-2">
+            {% for beer in post.session.beers %}
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-1.5 flex-1 min-w-0">
+                    <span class="text-sm font-medium text-gray-700 flex-shrink-0">{{ beer.label or 'Bier' }}</span>
+                    {% if beer.pb_rank == 1 %}
+                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 flex-shrink-0">PB!</span>
+                    {% elif beer.pb_rank == 2 %}
+                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-600 flex-shrink-0">2nd</span>
+                    {% elif beer.pb_rank == 3 %}
+                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-500 flex-shrink-0">3rd</span>
+                    {% endif %}
+                    {% if beer.beer_count and beer.beer_count > 1 %}
+                    <span class="text-[11px] text-gray-400 flex-shrink-0">({{ beer.beer_count }})</span>
+                    {% endif %}
+                    {% if beer.note %}
+                    <span class="text-[11px] text-gray-400 truncate">{{ beer.note|render_mentions }}</span>
+                    {% endif %}
+                </div>
+                {% if beer.is_vdl %}
+                <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 flex-shrink-0">VDL</span>
+                {% elif beer.drink_time_seconds is not none %}
+                <span class="time-badge text-xs font-bold px-2.5 py-0.5 rounded-full flex-shrink-0">{{ beer.drink_time_seconds|format_time }}</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+            <div class="flex items-center justify-between pt-2 border-t border-gray-200">
+                <span class="text-sm font-semibold text-gray-500">Session total</span>
+                <span class="text-sm font-bold text-maroon">{{ post.session.beer_count() }} bier{{ 's' if post.session.beer_count() != 1 }}</span>
+            </div>
+        </div>
+        {% elif post.is_vdl %}
+        <div class="flex items-center justify-center">
+            <span class="text-base font-bold px-4 py-1.5 rounded-full bg-amber-100 text-amber-700">
+                VDL
+            </span>
+        </div>
+        {% else %}
+        <div class="flex items-center justify-center">
+            <span class="time-badge text-base font-bold px-4 py-1.5 rounded-full">
+                {{ post.drink_time_seconds|format_time }}
+            </span>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- PB / Ranking celebrations -->
+    {% if post.session_id and post.session %}
+    {% for beer in post.session.beers %}
+    {% if beer.pb_rank == 1 %}
+    <div class="px-4 py-2.5 bg-green-50 border-t border-green-100">
+        <p class="text-sm font-bold text-green-700 text-center">NEW PB!! Fastest {{ beer.label or 'Bier' }} ever!!</p>
+    </div>
+    {% elif beer.pb_rank == 2 %}
+    <div class="px-4 py-2.5 bg-blue-50 border-t border-blue-100">
+        <p class="text-sm font-bold text-blue-600 text-center">YAY!! 2nd fastest {{ beer.label or 'Bier' }} so far!!</p>
+    </div>
+    {% elif beer.pb_rank == 3 %}
+    <div class="px-4 py-2.5 bg-orange-50 border-t border-orange-100">
+        <p class="text-sm font-bold text-orange-500 text-center">NICE!! 3rd fastest {{ beer.label or 'Bier' }} so far!!</p>
+    </div>
+    {% endif %}
+    {% endfor %}
+    {% endif %}
+
+    {% if post.caption %}
+    <p class="px-4 py-3 text-sm text-gray-700">{{ post.caption|render_mentions }}</p>
+    {% endif %}
+
+    <!-- Like button -->
+    <div class="px-4 py-3 border-t border-gray-100">
+        <button class="like-btn flex items-center gap-2 text-sm {{ 'liked text-maroon' if post.is_liked_by(current_user) else 'text-gray-500' }}"
+                data-post-id="{{ post.id }}">
+            <svg class="w-5 h-5" fill="{{ 'currentColor' if post.is_liked_by(current_user) else 'none' }}" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+            </svg>
+            <span class="like-count font-medium">{{ post.like_count() }}</span>
+            <span>likes</span>
+        </button>
+    </div>
+</div>
+
+<!-- Comments Section -->
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <h3 class="px-4 py-3 font-semibold text-sm border-b border-gray-100">
+        Comments ({{ post.comment_count() }})
+    </h3>
+
+    <div id="comments-list">
+        {% if comments %}
+        {% for comment in comments %}
+        <div class="px-4 py-3 border-b border-gray-50 last:border-0">
+            <div class="flex items-start gap-2.5">
+                <a href="{{ url_for('profiles.view', username=comment.author.username) }}" class="flex-shrink-0">
+                    {% if comment.author.avatar_filename %}
+                    <img src="{{ url_for('static', filename='uploads/' + comment.author.avatar_filename) }}"
+                         class="w-7 h-7 rounded-full object-cover">
+                    {% else %}
+                    <div class="w-7 h-7 rounded-full bg-maroon-100 flex items-center justify-center">
+                        <span class="text-maroon text-xs font-bold">{{ comment.author.display_name[0]|upper }}</span>
+                    </div>
+                    {% endif %}
+                </a>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm">
+                        <a href="{{ url_for('profiles.view', username=comment.author.username) }}"
+                           class="font-semibold text-gray-900">{{ comment.author.display_name }}</a>
+                        <span class="text-gray-700">{{ comment.body|render_mentions }}</span>
+                    </p>
+                    <p class="text-xs text-gray-400 mt-0.5">{{ comment.created_at|timeago }}</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <p class="px-4 py-6 text-center text-sm text-gray-400">No comments yet. Be the first!</p>
+        {% endif %}
+    </div>
+
+    <!-- Add comment form -->
+    <form method="POST" action="{{ url_for('posts.add_comment', id=post.id) }}"
+          class="flex items-center gap-2 px-4 py-3 border-t border-gray-100">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="text" name="body" placeholder="Add a comment..."
+               required maxlength="500"
+               class="flex-1 text-sm bg-gray-50 px-4 py-2.5 rounded-full border-0 focus:ring-0 focus:outline-none focus:bg-gray-100">
+        <button type="submit"
+                class="text-maroon font-semibold text-sm px-2 hover:text-maroon-700">
+            Post
+        </button>
+    </form>
+</div>
+{% endblock %}

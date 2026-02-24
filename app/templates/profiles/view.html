@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% from "components/post_card.html" import render_post %}
+{% block title %}{{ profile_user.display_name }} - BierStrava{% endblock %}
+
+{% block content %}
+<!-- Profile Header -->
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-4">
+    <div class="flex items-start gap-4">
+        <!-- Avatar -->
+        {% if profile_user.avatar_filename %}
+        <img src="{{ url_for('static', filename='uploads/' + profile_user.avatar_filename) }}"
+             class="w-20 h-20 rounded-full object-cover flex-shrink-0">
+        {% else %}
+        <div class="w-20 h-20 rounded-full bg-maroon-100 flex items-center justify-center flex-shrink-0">
+            <span class="text-maroon text-2xl font-bold">{{ profile_user.display_name[0]|upper }}</span>
+        </div>
+        {% endif %}
+
+        <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+                <h1 class="text-lg font-bold truncate">{{ profile_user.display_name }}</h1>
+            </div>
+            <p class="text-sm text-gray-400">@{{ profile_user.username }}</p>
+            {% if profile_user.bio %}
+            <p class="text-sm text-gray-600 mt-1">{{ profile_user.bio }}</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Connection stats -->
+    <div class="flex items-center gap-6 mt-4 text-sm">
+        {% if can_view %}
+        <a href="{{ url_for('profiles.connections', username=profile_user.username) }}" class="text-center">
+            <span class="font-bold text-gray-900">{{ profile_user.connection_count() }}</span>
+            <span class="text-gray-500 ml-1">connections</span>
+        </a>
+        {% else %}
+        <div class="text-center">
+            <span class="font-bold text-gray-900">{{ profile_user.connection_count() }}</span>
+            <span class="text-gray-500 ml-1">connections</span>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Action buttons -->
+    <div class="mt-4">
+        {% if current_user.id == profile_user.id %}
+        <div class="flex gap-2">
+            <a href="{{ url_for('profiles.edit', username=profile_user.username) }}"
+               class="flex-1 text-center bg-gray-100 text-gray-700 py-2 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">
+                Edit Profile
+            </a>
+            {% set notif_count = current_user.pending_request_count() %}
+            <a href="{{ url_for('settings.index') }}"
+               class="relative bg-gray-100 text-gray-700 p-2 rounded-xl hover:bg-gray-200 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                {% if notif_count > 0 %}
+                <span class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">{{ notif_count }}</span>
+                {% endif %}
+            </a>
+        </div>
+        {% else %}
+        {% set status = current_user.connection_status(profile_user) %}
+        {% if status == 'accepted' %}
+        <form method="POST" action="{{ url_for('profiles.disconnect', username=profile_user.username) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="w-full bg-gray-100 text-gray-700 py-2 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">
+                Connected
+            </button>
+        </form>
+        {% elif status == 'pending' %}
+        <button disabled class="w-full bg-maroon-50 text-maroon py-2 rounded-xl text-sm font-medium opacity-80">
+            Pending
+        </button>
+        {% else %}
+        <form method="POST" action="{{ url_for('profiles.connect', username=profile_user.username) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="w-full bg-maroon text-white py-2 rounded-xl text-sm font-medium hover:bg-maroon-700 transition-colors">
+                Connect
+            </button>
+        </form>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+{% if can_view %}
+<!-- Stats Grid -->
+{% if stats %}
+<div class="grid grid-cols-2 gap-3 mb-4">
+    <div class="bg-white rounded-xl p-3 border border-gray-100 text-center">
+        <p class="text-2xl font-bold text-maroon">{{ stats.best_time|format_time }}</p>
+        <p class="text-xs text-gray-500">Best Time</p>
+    </div>
+    <div class="bg-white rounded-xl p-3 border border-gray-100 text-center">
+        <p class="text-2xl font-bold text-maroon">{{ stats.avg_time|format_time }}</p>
+        <p class="text-xs text-gray-500">Avg Time</p>
+    </div>
+    <div class="bg-white rounded-xl p-3 border border-gray-100 text-center">
+        <p class="text-2xl font-bold text-gray-700">{{ stats.beers_this_month }}</p>
+        <p class="text-xs text-gray-500">This Month</p>
+    </div>
+    <div class="bg-white rounded-xl p-3 border border-gray-100 text-center">
+        <p class="text-2xl font-bold text-gray-700">{{ stats.total_beers }}</p>
+        <p class="text-xs text-gray-500">Total Biers</p>
+    </div>
+</div>
+{% endif %}
+
+<!-- PBs per Category -->
+{% if category_stats %}
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
+    <h3 class="text-sm font-semibold text-gray-700 mb-3">Personal Bests</h3>
+    <div class="space-y-0">
+        {% for cat in category_stats %}
+        <div class="flex items-center justify-between py-2.5 {{ 'border-t border-gray-100' if not loop.first }}">
+            <div class="flex items-center gap-2">
+                <span class="text-sm font-medium {{ 'text-gray-700' if cat.count > 0 else 'text-gray-400' }}">{{ cat.name }}</span>
+                <span class="text-[11px] text-gray-400">{{ cat.count }}×</span>
+            </div>
+            {% if cat.pb %}
+            <span class="time-badge text-xs font-bold px-2.5 py-0.5 rounded-full">{{ cat.pb|format_time }}</span>
+            {% elif cat.count > 0 %}
+            <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700">VDL</span>
+            {% else %}
+            <span class="text-xs text-gray-300 px-2.5 py-0.5">—</span>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Posts -->
+<h3 class="text-sm font-semibold text-gray-700 mb-3">Posts</h3>
+{% if posts %}
+    {% for post in posts %}
+        {{ render_post(post, current_user) }}
+    {% endfor %}
+{% else %}
+<div class="text-center py-8">
+    <p class="text-gray-400 text-sm">No posts yet.</p>
+</div>
+{% endif %}
+
+{% else %}
+<!-- Private account message -->
+<div class="text-center py-12">
+    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+        </svg>
+    </div>
+    <h3 class="text-gray-600 font-semibold mb-1">This account is private</h3>
+    <p class="text-gray-400 text-sm">Connect with this user to see their posts.</p>
+</div>
+{% endif %}
+{% endblock %}
+

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Log In - BierStrava{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex flex-col justify-center -mt-4">
+    <!-- Back to landing -->
+    <a href="{{ url_for('main.index') }}" class="text-maroon text-sm font-medium mb-6 inline-flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Back
+    </a>
+
+    <img src="{{ url_for('static', filename='logo.svg') }}" class="w-20 h-20 mx-auto mb-4" alt="BierStrava">
+    <h1 class="text-2xl font-bold text-center mb-1">Welcome back</h1>
+    <p class="text-gray-500 text-sm text-center mb-8">Log in to your account</p>
+
+    <form method="POST" class="space-y-4">
+        {{ form.hidden_tag() }}
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+            {{ form.username(class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm focus:ring-0", placeholder="your_username", autocapitalize="none", autocomplete="username") }}
+            {% for error in form.username.errors %}
+            <p class="text-red-500 text-xs mt-1">{{ error }}</p>
+            {% endfor %}
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            {{ form.password(class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm focus:ring-0", placeholder="••••••••", autocomplete="current-password") }}
+            {% for error in form.password.errors %}
+            <p class="text-red-500 text-xs mt-1">{{ error }}</p>
+            {% endfor %}
+        </div>
+
+        <div class="flex items-center">
+            {{ form.remember(class="w-4 h-4 rounded border-gray-300 text-maroon focus:ring-maroon") }}
+            <label for="remember" class="ml-2 text-sm text-gray-600">Remember me</label>
+        </div>
+
+        <button type="submit"
+                class="w-full bg-maroon text-white py-3 rounded-xl font-semibold hover:bg-maroon-700 transition-colors shadow-md">
+            Log In
+        </button>
+    </form>
+
+    <p class="text-center text-sm text-gray-500 mt-6">
+        Don't have an account?
+        <a href="{{ url_for('auth.register') }}" class="text-maroon font-semibold">Sign up</a>
+    </p>
+</div>
+{% endblock %}

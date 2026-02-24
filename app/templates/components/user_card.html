@@ -1,0 +1,35 @@
+{% macro render_user(user, current_user, show_connect=True) %}
+<div class="flex items-center gap-3 py-3 px-4 bg-white rounded-xl mb-2 border border-gray-100">
+    <a href="{{ url_for('profiles.view', username=user.username) }}" class="flex-shrink-0">
+        {% if user.avatar_filename %}
+        <img src="{{ url_for('static', filename='uploads/' + user.avatar_filename) }}"
+             class="w-11 h-11 rounded-full object-cover" alt="{{ user.display_name }}">
+        {% else %}
+        <div class="w-11 h-11 rounded-full bg-maroon-100 flex items-center justify-center">
+            <span class="text-maroon font-bold">{{ user.display_name[0]|upper }}</span>
+        </div>
+        {% endif %}
+    </a>
+    <div class="flex-1 min-w-0">
+        <a href="{{ url_for('profiles.view', username=user.username) }}" class="block">
+            <p class="font-semibold text-sm text-gray-900 truncate">{{ user.display_name }}</p>
+            <p class="text-xs text-gray-400">@{{ user.username }}</p>
+        </a>
+    </div>
+    {% if show_connect and current_user.id != user.id %}
+    {% set status = current_user.connection_status(user) %}
+    {% if status == 'accepted' %}
+    <span class="text-xs text-gray-400 font-medium">Connected</span>
+    {% elif status == 'pending' %}
+    <span class="text-xs text-maroon-300 font-medium">Pending</span>
+    {% else %}
+    <form method="POST" action="{{ url_for('profiles.connect', username=user.username) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="text-xs bg-maroon text-white px-4 py-1.5 rounded-full font-medium hover:bg-maroon-700 transition-colors">
+            Connect
+        </button>
+    </form>
+    {% endif %}
+    {% endif %}
+</div>
+{% endmacro %}

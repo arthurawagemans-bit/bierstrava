@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Manage {{ group.name }} - BierStrava{% endblock %}
+
+{% block content %}
+<div class="flex items-center gap-3 mb-6">
+    <a href="{{ url_for('groups.detail', id=group.id) }}" class="text-gray-500">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+    </a>
+    <h1 class="text-lg font-bold">Manage Members</h1>
+</div>
+
+<h2 class="text-sm font-semibold text-gray-700 mb-3">Members ({{ members|length }})</h2>
+
+<div class="space-y-2">
+    {% for m in members %}
+    <div class="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-gray-100">
+        <a href="{{ url_for('profiles.view', username=m.user.username) }}" class="flex-shrink-0">
+            {% if m.user.avatar_filename %}
+            <img src="{{ url_for('static', filename='uploads/' + m.user.avatar_filename) }}"
+                 class="w-10 h-10 rounded-full object-cover">
+            {% else %}
+            <div class="w-10 h-10 rounded-full bg-maroon-100 flex items-center justify-center">
+                <span class="text-maroon font-bold text-sm">{{ m.user.display_name[0]|upper }}</span>
+            </div>
+            {% endif %}
+        </a>
+        <div class="flex-1 min-w-0">
+            <p class="font-semibold text-sm truncate">{{ m.user.display_name }}</p>
+            <p class="text-xs text-gray-400">@{{ m.user.username }}
+                {% if m.role == 'admin' %}
+                <span class="ml-1 text-maroon font-medium">Admin</span>
+                {% endif %}
+            </p>
+        </div>
+        {% if m.user.id != current_user.id %}
+        <form method="POST" action="{{ url_for('groups.remove_member', id=group.id, user_id=m.user.id) }}"
+              onsubmit="return confirm('Remove this member?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="text-red-400 hover:text-red-600 text-xs font-medium">Remove</button>
+        </form>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Delete Group -->
+<div class="mt-8 pt-6 border-t border-gray-200">
+    <form method="POST" action="{{ url_for('groups.delete', id=group.id) }}"
+          onsubmit="return confirm('Delete this group permanently? This cannot be undone.')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="w-full bg-red-50 text-red-600 py-3 rounded-xl text-sm font-medium hover:bg-red-100 transition-colors">
+            Delete Group
+        </button>
+    </form>
+</div>
+{% endblock %}

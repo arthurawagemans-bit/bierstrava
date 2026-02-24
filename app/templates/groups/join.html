@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Join {{ group.name }} - BierStrava{% endblock %}
+
+{% block content %}
+<div class="min-h-[60vh] flex flex-col items-center justify-center text-center">
+    {% if group.avatar_filename %}
+    <img src="{{ url_for('static', filename='uploads/' + group.avatar_filename) }}"
+         class="w-20 h-20 rounded-xl object-cover mb-4">
+    {% else %}
+    <div class="w-20 h-20 rounded-xl bg-maroon-100 flex items-center justify-center mb-4">
+        <span class="text-maroon text-2xl font-bold">{{ group.name[0]|upper }}</span>
+    </div>
+    {% endif %}
+
+    <h1 class="text-xl font-bold mb-1">{{ group.name }}</h1>
+    <p class="text-gray-500 text-sm mb-1">{{ group.member_count() }} members</p>
+    {% if group.description %}
+    <p class="text-gray-600 text-sm mb-6 max-w-xs">{{ group.description }}</p>
+    {% else %}
+    <div class="mb-6"></div>
+    {% endif %}
+
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit"
+                class="bg-maroon text-white px-8 py-3 rounded-xl font-semibold hover:bg-maroon-700 transition-colors shadow-md">
+            Join Group
+        </button>
+    </form>
+</div>
+{% endblock %}

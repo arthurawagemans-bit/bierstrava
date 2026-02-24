@@ -1,0 +1,388 @@
+{% extends "base.html" %}
+{% block title %}Post Bier - BierStrava{% endblock %}
+
+{% block content %}
+<form method="POST" enctype="multipart/form-data" id="post-form">
+    {{ form.hidden_tag() }}
+    {{ form.drink_time_seconds(id="time-input", type="hidden") }}
+    <input type="hidden" name="is_vdl" id="is-vdl-input" value="">
+    <input type="hidden" name="beer_count" id="beer-count-input" value="1">
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- STEP 1: Full-Screen Tap-to-Time             -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div id="timer-screen" data-pb="{{ personal_best or '' }}"
+         class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-50 cursor-pointer select-none hidden"
+         style="-webkit-tap-highlight-color: transparent;">
+
+        <!-- Subtle hint at top -->
+        <p id="timer-hint" class="text-sm text-gray-400 mb-auto mt-16 transition-opacity duration-300">
+            Tap anywhere to start
+        </p>
+
+        <!-- Time display — center of screen -->
+        <div class="flex-1 flex flex-col items-center justify-center">
+            <div id="stopwatch-display" class="text-8xl font-bold text-maroon font-mono tracking-wide transition-colors duration-300">
+                0.000
+            </div>
+            <p id="timer-seconds-label" class="text-sm text-gray-400 mt-2">seconds</p>
+            {% if personal_best %}
+            <p id="pb-indicator" class="text-xs text-gray-400 mt-4">
+                PB: <span class="font-bold text-maroon font-mono">{{ personal_best|format_time }}</span>
+            </p>
+            {% endif %}
+        </div>
+
+        <!-- Bottom area -->
+        <div class="mb-16 flex flex-col items-center gap-3">
+            <button type="button" id="stopwatch-reset"
+                    class="text-sm text-gray-400 hover:text-gray-600 transition-colors hidden"
+                    onclick="event.stopPropagation()">
+                Reset
+            </button>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- STEP 2: Post Form (hidden until time set)   -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div id="post-section" class="hidden">
+
+        <!-- Time Summary -->
+        <div class="bg-white rounded-2xl border border-gray-100 p-4 mb-5 flex items-center justify-between">
+            <div>
+                <p class="text-xs text-gray-400">Your time</p>
+                <p id="time-summary" class="text-3xl font-bold text-maroon font-mono">0.000<span class="text-base text-gray-400 ml-1">s</span></p>
+            </div>
+            <button type="button" id="retake-btn"
+                    class="text-sm text-maroon font-medium bg-maroon-50 px-4 py-2 rounded-xl hover:bg-maroon-100 transition-colors">
+                Retake
+            </button>
+        </div>
+
+        <!-- PB celebration -->
+        <div id="pb-celebration" class="hidden bg-green-50 border border-green-200 rounded-xl p-3 mb-5 text-center">
+            <p class="text-green-700 font-bold text-sm">NEW PERSONAL BEST!</p>
+        </div>
+
+        <!-- Manual time edit -->
+        <details class="mb-5">
+            <summary class="text-xs text-gray-400 cursor-pointer hover:text-gray-600">Change time manually</summary>
+            <div class="mt-2 bg-white rounded-xl border border-gray-200 p-3">
+                <div class="flex items-center gap-2">
+                    <input type="number" id="manual-time-input"
+                           class="w-full text-center text-2xl font-bold text-maroon bg-transparent border-0 focus:ring-0 focus:outline-none font-mono"
+                           step="0.001" min="0.001" inputmode="decimal" placeholder="0.000">
+                    <span class="text-sm text-gray-400 flex-shrink-0">sec</span>
+                </div>
+            </div>
+        </details>
+
+        <!-- Photo Upload -->
+        <div class="mb-5">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Photo</label>
+            <div id="photo-area" class="photo-preview-area rounded-2xl overflow-hidden cursor-pointer relative"
+                 onclick="document.getElementById('photo-input').click()">
+                <div id="photo-placeholder" class="flex flex-col items-center justify-center py-10">
+                    <svg class="w-10 h-10 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <p class="text-sm text-gray-400">Tap to add a photo</p>
+                </div>
+                <img id="photo-preview" src="" alt="Preview" class="w-full aspect-[4/3] object-cover hidden">
+            </div>
+            {{ form.photo(id="photo-input", class="hidden", accept="image/*") }}
+            {% for error in form.photo.errors %}
+            <p class="text-red-500 text-xs mt-1">{{ error }}</p>
+            {% endfor %}
+        </div>
+
+        <!-- Caption -->
+        <div class="mb-5">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Caption</label>
+            {{ form.caption(class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm resize-none", rows="2", placeholder="How was it? @ to tag people, groups or more", **{"data-mentions": ""}) }}
+            {% for error in form.caption.errors %}
+            <p class="text-red-500 text-xs mt-1">{{ error }}</p>
+            {% endfor %}
+        </div>
+
+        <!-- Share photo with -->
+        <div class="mb-5">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Share photo with</label>
+            <p class="text-xs text-gray-400 mb-2">Time and caption are always visible to connections</p>
+            <div class="space-y-2">
+                <label class="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-gray-100 cursor-pointer">
+                    <input type="checkbox" name="is_public" id="public-toggle" value="y"
+                           class="w-4 h-4 rounded border-gray-300 text-maroon focus:ring-maroon"
+                           {{ 'checked' if last_public }}>
+                    <span class="text-sm text-gray-700">Your connections</span>
+                </label>
+                {% for value, label in form.groups.choices %}
+                <label class="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-gray-100 cursor-pointer">
+                    <input type="checkbox" name="groups" value="{{ value }}"
+                           class="w-4 h-4 rounded border-gray-300 text-maroon focus:ring-maroon"
+                           {{ 'checked' if value in last_group_ids }}>
+                    <span class="text-sm text-gray-700">{{ label }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% for error in form.drink_time_seconds.errors %}
+        <p class="text-red-500 text-xs mt-1 mb-3">{{ error }}</p>
+        {% endfor %}
+
+        <!-- Submit -->
+        <button type="submit"
+                class="w-full bg-maroon text-white py-3.5 rounded-xl font-semibold hover:bg-maroon-700 transition-colors shadow-md text-base mb-4">
+            Post Bier
+        </button>
+    </div>
+</form>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Session Form (separate form)               -->
+<!-- ═══════════════════════════════════════════ -->
+<form method="POST" action="{{ url_for('posts.create_session') }}" enctype="multipart/form-data" id="session-form">
+    {{ form.hidden_tag() }}
+    <input type="hidden" name="session_beers_json" id="session-beers-input" value="[]">
+
+    <div id="session-section">
+
+        <!-- Session header -->
+        <div class="bg-white rounded-2xl border border-gray-100 p-4 mb-5">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-lg font-bold text-gray-900">Session</h2>
+                <span id="session-beer-count" class="text-sm text-gray-400">0 biers</span>
+            </div>
+            <div id="session-beer-list">
+                <!-- Filled by JS -->
+            </div>
+        </div>
+
+        <!-- Session action buttons -->
+        <div id="session-actions" class="mb-5">
+            <div id="session-add-btns" class="flex gap-3 mb-3">
+                <button type="button" id="session-timer-btn"
+                        class="flex-1 bg-maroon text-white py-3 rounded-xl font-semibold text-sm">
+                    Bier (timed)
+                </button>
+                <button type="button" id="session-add-vdl-btn"
+                        class="flex-1 bg-amber-100 text-amber-700 py-3 rounded-xl font-semibold text-sm">
+                    Voor De Lekker
+                </button>
+            </div>
+            <div id="session-challenges">
+                <p class="text-xs text-gray-400 mb-3 text-center">Challenges</p>
+                <div class="space-y-3">
+                    <button type="button" class="session-challenge-btn w-full bg-blue-50 text-blue-700 py-3.5 rounded-xl font-semibold transition-colors text-base" data-beers="2">
+                        1 + 1 = Spies
+                    </button>
+                    <button type="button" class="session-challenge-btn btn-gold w-full py-3.5 rounded-xl font-semibold transition-colors text-base" data-beers="4">
+                        ✨✨ Golden Triangle (4) ✨✨
+                    </button>
+                    <button type="button" class="session-challenge-btn btn-kan w-full py-3.5 rounded-xl font-semibold transition-colors text-base relative overflow-hidden" data-beers="6">
+                        Kan (6)
+                    </button>
+                    <button type="button" class="session-challenge-btn btn-platinum w-full py-3.5 rounded-xl font-semibold transition-colors text-base" data-beers="10">
+                        ✨✨ Platinum Triangle (10) ✨✨
+                    </button>
+                    <style>
+                        .btn-gold{background:linear-gradient(145deg,#c9952a 0%,#fce38a 16%,#d4a537 32%,#f9e076 50%,#c9952a 68%,#fce38a 84%,#d4a537 100%);color:#5a2d0a;text-shadow:0 1px 0 rgba(255,255,255,.35);border:1.5px solid #b8860b;box-shadow:0 2px 8px rgba(180,130,30,.3),inset 0 1px 0 rgba(255,255,255,.4)}
+                        .btn-platinum{background:linear-gradient(145deg,#96a8b8 0%,#e8eef4 16%,#a8b8c8 32%,#dde5ed 50%,#96a8b8 68%,#e8eef4 84%,#a8b8c8 100%);color:#1e3a5f;text-shadow:0 1px 0 rgba(255,255,255,.5);border:1.5px solid #8a9cae;box-shadow:0 2px 8px rgba(120,140,160,.3),inset 0 1px 0 rgba(255,255,255,.5)}
+                        .btn-kan{background:linear-gradient(180deg,#fffdf7 0%,#fefcf2 12%,#fef3c7 22%,#fcd34d 34%,#f59e0b 50%,#d97706 75%,#b45309 100%);color:#581c08;text-shadow:0 1px 0 rgba(255,255,255,.3);border:1.5px solid #92400e;box-shadow:0 2px 8px rgba(180,100,10,.3),inset 0 1px 0 rgba(255,255,255,.5)}
+                        .hk-cap{width:22px;height:22px;border-radius:50%;background:#16a34a;box-shadow:0 0 0 1.5px #a1a1aa,inset 0 1px 1px rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+                        .hk-cap::after{content:'';width:11px;height:11px;background:#dc2626;clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)}
+                        .hk-slot{width:22px;height:22px;border-radius:50%;background:#0c3520;box-shadow:inset 0 1px 3px rgba(0,0,0,.5);flex-shrink:0}
+                        .hk-label{color:#fff;font-weight:700;font-size:13px;letter-spacing:.5px;-webkit-text-stroke:1px #14532d;paint-order:stroke fill;text-shadow:0 1px 2px rgba(0,0,0,.4);pointer-events:none}
+                    </style>
+                    <div class="flex gap-3">
+                        <button type="button" class="session-challenge-btn flex-1 rounded-xl transition-colors overflow-hidden relative" data-beers="12"
+                                style="background:#14532d;padding:14px 0;">
+                            <div class="flex flex-col items-center gap-2 pointer-events-none">
+                                <div class="flex gap-2">
+                                    <span class="hk-cap"></span><span class="hk-cap"></span><span class="hk-cap"></span><span class="hk-cap"></span><span class="hk-cap"></span><span class="hk-cap"></span>
+                                </div>
+                                <div class="flex gap-2">
+                                    <span class="hk-cap"></span><span class="hk-cap"></span><span class="hk-cap"></span><span class="hk-cap"></span><span class="hk-cap"></span><span class="hk-cap"></span>
+                                </div>
+                                <div class="flex gap-2">
+                                    <span class="hk-slot"></span><span class="hk-slot"></span><span class="hk-slot"></span><span class="hk-slot"></span><span class="hk-slot"></span><span class="hk-slot"></span>
+                                </div>
+                                <div class="flex gap-2">
+                                    <span class="hk-slot"></span><span class="hk-slot"></span><span class="hk-slot"></span><span class="hk-slot"></span><span class="hk-slot"></span><span class="hk-slot"></span>
+                                </div>
+                            </div>
+                            <span class="hk-label absolute inset-0 flex items-center justify-center">½ Krat (12)</span>
+                        </button>
+                        <button type="button" class="session-challenge-btn flex-1 rounded-xl transition-colors overflow-hidden relative" data-beers="24"
+                                style="background:#14532d;padding:14px 0;">
+                            <div class="flex flex-col items-center gap-2 pointer-events-none">
+                                <div class="flex gap-2">
+                                    <span class="hk-cap"></span><span class="hk-cap"></span><span class="hk-cap"></span><span class="hk-cap"></span><span class="hk-cap"></span><span class="hk-cap"></span>
+                                </div>
+                                <div class="flex gap-2">
+                                    <span class="hk-cap"></span><span class="hk-cap"></span><span class="hk-cap"></span><span class="hk-cap"></span><span class="hk-cap"></span><span class="hk-cap"></span>
+                                </div>
+                                <div class="flex gap-2">
+                                    <span class="hk-cap"></span><span class="hk-cap"></span><span class="hk-cap"></span><span class="hk-cap"></span><span class="hk-cap"></span><span class="hk-cap"></span>
+                                </div>
+                                <div class="flex gap-2">
+                                    <span class="hk-cap"></span><span class="hk-cap"></span><span class="hk-cap"></span><span class="hk-cap"></span><span class="hk-cap"></span><span class="hk-cap"></span>
+                                </div>
+                            </div>
+                            <span class="hk-label absolute inset-0 flex items-center justify-center">Krat (24)</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Photo Upload -->
+        <div class="mb-5">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Photo</label>
+            <div class="photo-preview-area rounded-2xl overflow-hidden cursor-pointer relative"
+                 onclick="document.getElementById('session-photo-input').click()">
+                <div id="session-photo-placeholder" class="flex flex-col items-center justify-center py-10">
+                    <svg class="w-10 h-10 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <p class="text-sm text-gray-400">Tap to add a photo</p>
+                </div>
+                <img id="session-photo-preview" src="" alt="Preview" class="w-full aspect-[4/3] object-cover hidden">
+            </div>
+            <input type="file" name="photo" id="session-photo-input" class="hidden" accept="image/*">
+        </div>
+
+        <!-- Caption -->
+        <div class="mb-5">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Caption</label>
+            <textarea name="caption" data-mentions class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm resize-none"
+                      rows="2" placeholder="How was the session? @ to tag people, groups or more" maxlength="500"></textarea>
+        </div>
+
+        <!-- Share photo with -->
+        <div class="mb-5">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Share photo with</label>
+            <p class="text-xs text-gray-400 mb-2">Time and caption are always visible to connections</p>
+            <div class="space-y-2">
+                <label class="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-gray-100 cursor-pointer">
+                    <input type="checkbox" name="is_public" value="y"
+                           class="w-4 h-4 rounded border-gray-300 text-maroon focus:ring-maroon"
+                           {{ 'checked' if last_public }}>
+                    <span class="text-sm text-gray-700">Your connections</span>
+                </label>
+                {% for value, label in form.groups.choices %}
+                <label class="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-gray-100 cursor-pointer">
+                    <input type="checkbox" name="groups" value="{{ value }}"
+                           class="w-4 h-4 rounded border-gray-300 text-maroon focus:ring-maroon"
+                           {{ 'checked' if value in last_group_ids }}>
+                    <span class="text-sm text-gray-700">{{ label }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Preview button (replaces direct submit) -->
+        <button type="button" id="preview-session-btn"
+                class="w-full bg-maroon text-white py-3.5 rounded-xl font-semibold hover:bg-maroon-700 transition-colors shadow-md text-base mb-4">
+            Preview Post
+        </button>
+    </div>
+
+    <!-- ═══════════════════════════════════════════ -->
+    <!-- STEP 3: Preview Screen                      -->
+    <!-- ═══════════════════════════════════════════ -->
+    <div id="preview-section" class="hidden">
+        <div class="flex items-center gap-3 mb-4">
+            <button type="button" id="preview-back-btn" class="text-gray-500">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+            </button>
+            <h2 class="text-lg font-bold flex-1">Preview</h2>
+        </div>
+
+        <!-- Post card preview -->
+        <div class="bg-white rounded-2xl shadow-sm mb-4 overflow-hidden border border-gray-100">
+            <!-- Header: avatar + username -->
+            <div class="flex items-center px-4 py-3">
+                <div class="flex-shrink-0">
+                    {% if current_user.avatar_filename %}
+                    <img src="{{ url_for('static', filename='uploads/' + current_user.avatar_filename) }}"
+                         class="w-9 h-9 rounded-full object-cover">
+                    {% else %}
+                    <div class="w-9 h-9 rounded-full bg-maroon-100 flex items-center justify-center">
+                        <span class="text-maroon font-bold text-sm">{{ current_user.display_name[0]|upper }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="ml-3 flex-1 min-w-0">
+                    <span class="font-semibold text-sm text-gray-900 block">{{ current_user.display_name }}</span>
+                    <p class="text-xs text-gray-400">Just now</p>
+                </div>
+            </div>
+
+            <!-- Photo preview -->
+            <div id="preview-photo-container" class="hidden">
+                <img id="preview-photo" src="" class="w-full aspect-[4/3] object-cover">
+            </div>
+
+            <!-- Time bar -->
+            <div id="preview-time-bar" class="px-4 py-2.5 bg-gray-50/80">
+                <!-- Filled by JS -->
+            </div>
+
+            <!-- Caption -->
+            <p id="preview-caption" class="px-4 py-2 text-sm text-gray-700 hidden"></p>
+
+            <!-- Fake actions bar -->
+            <div class="px-4 py-2.5 flex items-center gap-5 border-t border-gray-100">
+                <div class="flex items-center gap-1.5 text-sm text-gray-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                    <span class="font-medium">0</span>
+                </div>
+                <div class="flex items-center gap-1.5 text-sm text-gray-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                    </svg>
+                    <span class="font-medium">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sharing info -->
+        <div id="preview-sharing" class="bg-white rounded-xl border border-gray-100 px-4 py-3 mb-5">
+            <p class="text-xs text-gray-400 mb-1">Sharing with</p>
+            <p id="preview-share-list" class="text-sm text-gray-600"></p>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex gap-3 mb-4">
+            <button type="button" id="preview-edit-btn"
+                    class="flex-1 bg-gray-100 text-gray-700 py-3.5 rounded-xl font-semibold text-base">
+                Edit
+            </button>
+            <button type="submit"
+                    class="flex-1 bg-maroon text-white py-3.5 rounded-xl font-semibold text-base shadow-md">
+                Post
+            </button>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>window.__topTimes = {{ top_times_json|safe }};</script>
+<script src="{{ url_for('static', filename='js/post.js') }}"></script>
+{% endblock %}
