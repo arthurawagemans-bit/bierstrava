@@ -4,3 +4,4 @@ Flask-Login==0.6.3
 Flask-WTF==1.2.1
 Pillow==11.1.0
 email_validator==2.3.0
+gunicorn==21.2.0
