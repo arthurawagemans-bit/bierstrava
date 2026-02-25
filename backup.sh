@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────
-# BierStrava Backup Script
+# VEAU Backup Script
 # Downloads a backup of the database + uploads from any host.
 #
 # Usage:
@@ -50,10 +50,10 @@ mkdir -p "$BACKUP_DIR"
 
 # Generate filename with timestamp
 TIMESTAMP=$(date +%Y-%m-%d-%H%M%S)
-FILENAME="bierstrava-${TIMESTAMP}.tar.gz"
+FILENAME="veau-${TIMESTAMP}.tar.gz"
 FILEPATH="$BACKUP_DIR/$FILENAME"
 
-echo "BierStrava Backup"
+echo "VEAU Backup"
 echo "  Source: $BACKUP_URL"
 echo "  Time:   $(date)"
 echo ""
@@ -91,12 +91,12 @@ echo "  Size:   $SIZE"
 echo "  Files:  $FILE_COUNT"
 
 # Cleanup old backups (keep last MAX_BACKUPS)
-BACKUP_COUNT=$(ls -1 "$BACKUP_DIR"/bierstrava-*.tar.gz 2>/dev/null | wc -l | tr -d ' ')
+BACKUP_COUNT=$(ls -1 "$BACKUP_DIR"/veau-*.tar.gz 2>/dev/null | wc -l | tr -d ' ')
 if [ "$BACKUP_COUNT" -gt "$MAX_BACKUPS" ]; then
     DELETE_COUNT=$((BACKUP_COUNT - MAX_BACKUPS))
     echo ""
     echo "Cleaning up $DELETE_COUNT old backup(s) (keeping last $MAX_BACKUPS)..."
-    ls -1t "$BACKUP_DIR"/bierstrava-*.tar.gz | tail -n "$DELETE_COUNT" | xargs rm -f
+    ls -1t "$BACKUP_DIR"/veau-*.tar.gz | tail -n "$DELETE_COUNT" | xargs rm -f
 fi
 
 echo ""

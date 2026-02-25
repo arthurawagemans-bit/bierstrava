@@ -1,4 +1,4 @@
-// BierStrava - Global JavaScript
+// VEAU - Global JavaScript
 
 document.addEventListener('DOMContentLoaded', function() {
     // Auto-dismiss flash messages
@@ -95,10 +95,10 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
 
         const url = btn.dataset.postUrl;
-        const text = btn.dataset.postText || 'Check out this post on BierStrava!';
+        const text = btn.dataset.postText || 'Check out this post on VEAU!';
 
         if (navigator.share) {
-            navigator.share({ title: 'BierStrava', text: text, url: url }).catch(function() {});
+            navigator.share({ title: 'VEAU', text: text, url: url }).catch(function() {});
         } else {
             navigator.clipboard.writeText(url).then(function() {
                 // Show brief toast

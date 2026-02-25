@@ -15,7 +15,7 @@ def create_app(config_class=Config):
         format='%(asctime)s %(levelname)s [%(name)s] %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S',
     )
-    logger = logging.getLogger('bierstrava')
+    logger = logging.getLogger('veau')
 
     # Warn if using default secret key
     if app.config['SECRET_KEY'] == 'dev-secret-key-change-in-production':
@@ -152,5 +152,5 @@ def create_app(config_class=Config):
                 db.session.add(Achievement(slug=slug, name=name, icon=icon, description=desc))
         db.session.commit()
 
-    logger.info('BierStrava app initialised')
+    logger.info('VEAU app initialised')
     return app

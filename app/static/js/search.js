@@ -1,4 +1,4 @@
-// BierStrava — Instagram-style Search Page
+// VEAU — Instagram-style Search Page
 
 document.addEventListener('DOMContentLoaded', function() {
 

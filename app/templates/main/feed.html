@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 {% from "components/post_card.html" import render_post %}
-{% block title %}Feed - BierStrava{% endblock %}
+{% block title %}Feed - VEAU{% endblock %}
 
 {% block content %}
 <!-- Header -->
 <div class="flex items-center justify-between mb-4">
     <div class="flex items-center gap-2">
-        <img src="{{ url_for('static', filename='logo.svg') }}" class="w-8 h-8" alt="BierStrava">
-        <h1 class="text-xl font-bold">Bier<span class="text-maroon">Strava</span></h1>
+        <img src="{{ url_for('static', filename='logo.svg') }}" class="w-8 h-8" alt="VEAU">
+        <h1 class="text-xl font-bold">VEAU</h1>
     </div>
     {% if current_user.pending_request_count() > 0 %}
     <a href="{{ url_for('profiles.connection_requests') }}"

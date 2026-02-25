@@ -1,4 +1,4 @@
-// BierStrava — @ Mention Dropdown (people, groups, tags)
+// VEAU — @ Mention Dropdown (people, groups, tags)
 
 document.addEventListener('DOMContentLoaded', function() {
 

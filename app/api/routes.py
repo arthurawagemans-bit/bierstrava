@@ -463,7 +463,7 @@ def backup():
             buf,
             mimetype='application/gzip',
             as_attachment=True,
-            download_name='bierstrava-backup.tar.gz',
+            download_name='veau-backup.tar.gz',
         )
     finally:
         shutil.rmtree(tmp_dir, ignore_errors=True)

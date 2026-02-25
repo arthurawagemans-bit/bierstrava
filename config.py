@@ -8,9 +8,9 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 
     # Database: use DATABASE_PATH env var or default to local path
-    # On Railway, set DATABASE_PATH=/app/data/bierstrava.db (persistent volume)
-    # Locally, defaults to ~/.bierstrava/bierstrava.db
-    _default_db = os.path.join(os.path.expanduser('~'), '.bierstrava', 'bierstrava.db')
+    # On Railway, set DATABASE_PATH=/data/bierstrava.db (persistent volume)
+    # Locally, defaults to ~/.veau/veau.db
+    _default_db = os.path.join(os.path.expanduser('~'), '.veau', 'veau.db')
     _db_path = os.environ.get('DATABASE_PATH', _default_db)
     _db_dir = os.path.dirname(_db_path)
     if _db_dir:

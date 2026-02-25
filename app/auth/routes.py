@@ -51,7 +51,7 @@ def register():
 
         login_user(user)
         logger.info('New user registered: %s', user.username)
-        flash('Welcome to BierStrava!', 'success')
+        flash('Welcome to VEAU!', 'success')
         return redirect(url_for('main.feed'))
 
     return render_template('auth/register.html', form=form)
