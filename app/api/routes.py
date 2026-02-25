@@ -1,6 +1,13 @@
 import logging
+import hmac
+import io
+import os
+import shutil
+import sqlite3
+import tarfile
+import tempfile
 from sqlalchemy.exc import IntegrityError
-from flask import jsonify, request, abort, render_template
+from flask import jsonify, request, abort, render_template, current_app, send_file
 from flask_login import login_required, current_user
 from . import bp
 from ..extensions import db, limiter
@@ -409,3 +416,54 @@ def invite_to_group(id, user_id):
         db.session.commit()
 
     return jsonify(success=True, status='invited')
+
+
+# ── Backup endpoint ──────────────────────────────────────
+
+@bp.route('/backup', methods=['GET'])
+@limiter.limit("1 per minute")
+def backup():
+    """Download a .tar.gz backup of the database and uploads.
+    Protected by BACKUP_SECRET env var. Disabled when secret is empty."""
+    secret = current_app.config.get('BACKUP_SECRET', '')
+    if not secret:
+        abort(404)
+
+    provided = request.args.get('secret', '')
+    if not hmac.compare_digest(secret, provided):
+        abort(403)
+
+    db_uri = current_app.config['SQLALCHEMY_DATABASE_URI']
+    db_path = db_uri.replace('sqlite:///', '')
+    upload_folder = current_app.config['UPLOAD_FOLDER']
+
+    tmp_dir = tempfile.mkdtemp()
+    try:
+        # Use SQLite backup API for a consistent snapshot
+        backup_db_path = os.path.join(tmp_dir, 'bierstrava.db')
+        src = sqlite3.connect(db_path)
+        dst = sqlite3.connect(backup_db_path)
+        src.backup(dst)
+        src.close()
+        dst.close()
+
+        # Create tar.gz in memory
+        buf = io.BytesIO()
+        with tarfile.open(fileobj=buf, mode='w:gz') as tar:
+            tar.add(backup_db_path, arcname='bierstrava.db')
+            if os.path.isdir(upload_folder):
+                for fname in os.listdir(upload_folder):
+                    fpath = os.path.join(upload_folder, fname)
+                    if os.path.isfile(fpath):
+                        tar.add(fpath, arcname=f'uploads/{fname}')
+
+        buf.seek(0)
+        logger.info('Backup created successfully')
+        return send_file(
+            buf,
+            mimetype='application/gzip',
+            as_attachment=True,
+            download_name='bierstrava-backup.tar.gz',
+        )
+    finally:
+        shutil.rmtree(tmp_dir, ignore_errors=True)

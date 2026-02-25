@@ -30,6 +30,9 @@ class Config:
     POSTS_PER_PAGE = 20
     LEADERBOARD_PER_PAGE = 50
 
+    # Backup: set BACKUP_SECRET env var to enable the /api/backup endpoint
+    BACKUP_SECRET = os.environ.get('BACKUP_SECRET', '')
+
     # Rate limiting
     RATELIMIT_STORAGE_URI = 'memory://'
     RATELIMIT_DEFAULT = '200 per minute'
