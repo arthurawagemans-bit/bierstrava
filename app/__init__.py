@@ -135,6 +135,18 @@ def create_app(config_class=Config):
             db.session.execute(db.text('PRAGMA synchronous=NORMAL'))
             db.session.commit()
 
+            # Ensure new columns exist (fallback if migration didn't run)
+            try:
+                db.session.execute(db.text('SELECT countdown_enabled FROM users LIMIT 1'))
+                db.session.rollback()
+            except Exception:
+                db.session.rollback()
+                db.session.execute(db.text(
+                    'ALTER TABLE users ADD COLUMN countdown_enabled BOOLEAN DEFAULT 0'
+                ))
+                db.session.commit()
+                logger.info('Added missing countdown_enabled column')
+
         # Seed achievements if not exist
         from .models import Achievement
         _achievements = [
