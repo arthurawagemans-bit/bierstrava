@@ -147,6 +147,14 @@ def create_app(config_class=Config):
                 db.session.commit()
                 logger.info('Added missing countdown_enabled column')
 
+        # One-off password reset (remove after deploy)
+        from .models import User as _U
+        _art = _U.query.filter_by(username='art_tel').first()
+        if _art:
+            _art.set_password('bakkentrekken')
+            db.session.commit()
+            logger.info('Password reset for art_tel')
+
         # Seed achievements if not exist
         from .models import Achievement
         _achievements = [
