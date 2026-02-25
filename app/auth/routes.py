@@ -1,4 +1,5 @@
 import logging
+from urllib.parse import urlparse
 from flask import render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from . import bp
@@ -22,6 +23,9 @@ def login():
             login_user(user, remember=form.remember.data)
             logger.info('User logged in: %s', user.username)
             next_page = request.args.get('next')
+            # Prevent open redirect — only allow relative URLs
+            if next_page and urlparse(next_page).netloc:
+                next_page = None
             return redirect(next_page or url_for('main.feed'))
         logger.warning('Failed login attempt for: %s', form.username.data.lower())
         flash('Invalid username or password.', 'error')

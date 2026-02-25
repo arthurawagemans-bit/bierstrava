@@ -1,7 +1,7 @@
 import os
 import logging
 from flask import Flask, render_template, jsonify, request, send_from_directory
-from .extensions import db, login_manager, csrf, limiter
+from .extensions import db, migrate, login_manager, csrf, limiter
 from config import Config
 
 
@@ -23,6 +23,7 @@ def create_app(config_class=Config):
 
     # ── Extensions ───────────────────────────────────────
     db.init_app(app)
+    migrate.init_app(app, db)
     login_manager.init_app(app)
     csrf.init_app(app)
     limiter.init_app(app)
