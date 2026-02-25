@@ -41,24 +41,36 @@
     </div>
 </div>
 
-<!-- Privacy -->
+<!-- Preferences -->
 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
-    <h3 class="text-sm font-semibold text-gray-700 mb-3">Privacy</h3>
+    <h3 class="text-sm font-semibold text-gray-700 mb-3">Preferences</h3>
     <form method="POST" action="{{ url_for('settings.update_privacy') }}">
         {{ settings_form.hidden_tag() }}
-        <div class="flex items-center justify-between">
-            <div>
-                <p class="text-sm font-medium text-gray-700">Private Account</p>
-                <p class="text-xs text-gray-400">Only approved connections can see your posts</p>
+        <div class="space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-700">Private Account</p>
+                    <p class="text-xs text-gray-400">Only approved connections can see your posts</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    {{ settings_form.is_private(class="sr-only peer", id="privacy-toggle") }}
+                    <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-maroon after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+                </label>
             </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-                {{ settings_form.is_private(class="sr-only peer", id="privacy-toggle") }}
-                <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-maroon after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
-            </label>
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-700">Timer Countdown</p>
+                    <p class="text-xs text-gray-400">Show 3-2-1 countdown before the timer starts</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    {{ settings_form.countdown_enabled(class="sr-only peer", id="countdown-toggle") }}
+                    <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-maroon after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+                </label>
+            </div>
         </div>
         <button type="submit"
                 class="w-full mt-4 bg-gray-100 text-gray-700 py-2 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">
-            Save Privacy Settings
+            Save Settings
         </button>
     </form>
 </div>

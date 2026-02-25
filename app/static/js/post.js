@@ -52,6 +52,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // ── PB value ──
     var pbValue = parseFloat(timerScreen.dataset.pb) || null;
 
+    // ── Countdown preference ──
+    var countdownEnabled = timerScreen.dataset.countdown === 'true';
+
     // ── Countdown State ──
     var countdownActive = false;
 
@@ -208,7 +211,7 @@ document.addEventListener('DOMContentLoaded', function() {
         display.textContent = '0.000';
         display.style.transform = '';
         display.style.transition = '';
-        hint.textContent = 'Tap to start countdown';
+        hint.textContent = countdownEnabled ? 'Tap to start countdown' : 'Tap anywhere to start';
         hint.classList.remove('opacity-50');
         display.classList.remove('text-red-600', 'stopwatch-running');
         display.classList.add('text-maroon');
@@ -354,14 +357,22 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target.closest('#stopwatch-reset')) return;
 
         if (state === 'idle') {
-            runCountdown();
+            if (countdownEnabled) {
+                runCountdown();
+            } else {
+                startTimerNow();
+            }
         } else if (state === 'countdown') {
             // Ignore taps during countdown
             return;
         } else if (state === 'running') {
             stopTimer();
         } else if (state === 'stopped') {
-            runCountdown();
+            if (countdownEnabled) {
+                runCountdown();
+            } else {
+                startTimerNow();
+            }
         }
     });
 

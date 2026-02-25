@@ -11,13 +11,13 @@
     <!-- ═══════════════════════════════════════════ -->
     <!-- STEP 1: Full-Screen Tap-to-Time             -->
     <!-- ═══════════════════════════════════════════ -->
-    <div id="timer-screen" data-pb="{{ personal_best or '' }}"
+    <div id="timer-screen" data-pb="{{ personal_best or '' }}" data-countdown="{{ 'true' if current_user.countdown_enabled else 'false' }}"
          class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-50 cursor-pointer select-none hidden"
          style="-webkit-tap-highlight-color: transparent;">
 
         <!-- Subtle hint at top -->
         <p id="timer-hint" class="text-sm text-gray-400 mb-auto mt-16 transition-opacity duration-300">
-            Tap anywhere to start
+            {{ 'Tap to start countdown' if current_user.countdown_enabled else 'Tap anywhere to start' }}
         </p>
 
         <!-- Time display — center of screen -->

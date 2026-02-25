@@ -5,6 +5,7 @@ from wtforms.validators import DataRequired, Length, EqualTo, Optional
 
 class SettingsForm(FlaskForm):
     is_private = BooleanField('Private Account')
+    countdown_enabled = BooleanField('Timer Countdown')
     submit = SubmitField('Save Settings')
 
 

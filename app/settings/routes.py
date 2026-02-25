@@ -25,8 +25,9 @@ def update_privacy():
     form = SettingsForm()
     if form.validate_on_submit():
         current_user.is_private = form.is_private.data
+        current_user.countdown_enabled = form.countdown_enabled.data
         db.session.commit()
-        flash('Privacy settings updated!', 'success')
+        flash('Settings updated!', 'success')
     return redirect(url_for('settings.index'))
 
 

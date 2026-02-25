@@ -17,6 +17,7 @@ class User(UserMixin, db.Model):
     bio = db.Column(db.String(300), default='')
     avatar_filename = db.Column(db.String(255), default=None)
     is_private = db.Column(db.Boolean, default=False)
+    countdown_enabled = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     posts = db.relationship('BeerPost', backref='author', lazy='dynamic',
