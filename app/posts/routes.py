@@ -57,7 +57,7 @@ def check_achievements(user):
 
     # social: 5 connections
     conn_count = Connection.query.filter(
-        db.or_(Connection.requester_id == user.id, Connection.addressee_id == user.id),
+        db.or_(Connection.follower_id == user.id, Connection.followed_id == user.id),
         Connection.status == 'accepted'
     ).count()
     if conn_count >= 5:
