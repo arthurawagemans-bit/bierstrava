@@ -133,7 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function userCard(u) {
         var avatar;
         if (u.avatar) {
-            avatar = '<img src="/static/uploads/' + esc(u.avatar) + '" class="w-11 h-11 rounded-full object-cover flex-shrink-0">';
+            avatar = '<img src="/uploads/' + esc(u.avatar) + '" class="w-11 h-11 rounded-full object-cover flex-shrink-0">';
         } else {
             var ch = (u.display_name ? u.display_name[0] : '?').toUpperCase();
             avatar = '<div class="w-11 h-11 rounded-full bg-maroon-100 flex items-center justify-center flex-shrink-0">'
@@ -166,7 +166,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function groupCard(g) {
         var avatar;
         if (g.avatar) {
-            avatar = '<img src="/static/uploads/' + esc(g.avatar) + '" class="w-11 h-11 rounded-xl object-cover flex-shrink-0">';
+            avatar = '<img src="/uploads/' + esc(g.avatar) + '" class="w-11 h-11 rounded-xl object-cover flex-shrink-0">';
         } else {
             var ch = (g.name ? g.name[0] : '?').toUpperCase();
             avatar = '<div class="w-11 h-11 rounded-xl bg-maroon-100 flex items-center justify-center flex-shrink-0">'

@@ -4,7 +4,7 @@
 {% block content %}
 <div class="min-h-[60vh] flex flex-col items-center justify-center text-center">
     {% if group.avatar_filename %}
-    <img src="{{ url_for('static', filename='uploads/' + group.avatar_filename) }}"
+    <img src="{{ upload_url(group.avatar_filename) }}"
          class="w-20 h-20 rounded-xl object-cover mb-4">
     {% else %}
     <div class="w-20 h-20 rounded-xl bg-maroon-100 flex items-center justify-center mb-4">

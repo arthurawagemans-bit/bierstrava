@@ -69,6 +69,15 @@ def create_app(config_class=Config):
     def uploaded_file(filename):
         return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
+    # ── Template global for upload URLs ───────────────────
+    @app.template_global()
+    def upload_url(filename):
+        """Generate URL for an uploaded file. Works with any UPLOAD_FOLDER location."""
+        if filename:
+            from flask import url_for as _url_for
+            return _url_for('uploaded_file', filename=filename)
+        return ''
+
     # ── Context processor (optimised: single query) ──────
     @app.context_processor
     def inject_notifications():

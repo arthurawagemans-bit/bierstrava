@@ -18,7 +18,7 @@
     <div class="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-gray-100">
         <a href="{{ url_for('profiles.view', username=m.user.username) }}" class="flex-shrink-0">
             {% if m.user.avatar_filename %}
-            <img src="{{ url_for('static', filename='uploads/' + m.user.avatar_filename) }}"
+            <img src="{{ upload_url(m.user.avatar_filename) }}"
                  class="w-10 h-10 rounded-full object-cover">
             {% else %}
             <div class="w-10 h-10 rounded-full bg-maroon-100 flex items-center justify-center">

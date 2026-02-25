@@ -50,7 +50,7 @@
         <label class="block text-sm font-medium text-gray-700 mb-2">Photo</label>
         {% if post.photo_filename %}
         <div class="rounded-2xl overflow-hidden mb-2 relative">
-            <img src="{{ url_for('static', filename='uploads/' + post.photo_filename) }}"
+            <img src="{{ upload_url(post.photo_filename) }}"
                  class="w-full aspect-[4/3] object-cover" id="current-photo">
         </div>
         <label class="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-gray-100 cursor-pointer mb-2">

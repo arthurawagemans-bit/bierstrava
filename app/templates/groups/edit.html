@@ -31,7 +31,7 @@
         <label class="block text-sm font-medium text-gray-700 mb-2">Group Photo</label>
         {% if group.avatar_filename %}
         <div class="flex items-center gap-3 mb-3">
-            <img src="{{ url_for('static', filename='uploads/' + group.avatar_filename) }}"
+            <img src="{{ upload_url(group.avatar_filename) }}"
                  class="w-16 h-16 rounded-xl object-cover">
             <span class="text-xs text-gray-400">Current photo</span>
         </div>

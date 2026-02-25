@@ -45,7 +45,7 @@
     <div class="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-gray-100">
         <a href="{{ url_for('profiles.view', username=req.user.username) }}" class="flex-shrink-0">
             {% if req.user.avatar_filename %}
-            <img src="{{ url_for('static', filename='uploads/' + req.user.avatar_filename) }}"
+            <img src="{{ upload_url(req.user.avatar_filename) }}"
                  class="w-10 h-10 rounded-full object-cover">
             {% else %}
             <div class="w-10 h-10 rounded-full bg-maroon-100 flex items-center justify-center">
@@ -117,7 +117,7 @@
                 data.users.forEach(function(u) {
                     var avatar;
                     if (u.avatar) {
-                        avatar = '<img src="/static/uploads/' + esc(u.avatar) + '" class="w-9 h-9 rounded-full object-cover flex-shrink-0">';
+                        avatar = '<img src="/uploads/' + esc(u.avatar) + '" class="w-9 h-9 rounded-full object-cover flex-shrink-0">';
                     } else {
                         var ch = (u.display_name ? u.display_name[0] : '?').toUpperCase();
                         avatar = '<div class="w-9 h-9 rounded-full bg-maroon-100 flex items-center justify-center flex-shrink-0"><span class="text-maroon font-bold text-sm">' + esc(ch) + '</span></div>';

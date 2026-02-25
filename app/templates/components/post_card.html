@@ -4,7 +4,7 @@
     <div class="flex items-center px-4 py-3">
         <a href="{{ url_for('profiles.view', username=post.author.username) }}" class="flex-shrink-0">
             {% if post.author.avatar_filename %}
-            <img src="{{ url_for('static', filename='uploads/' + post.author.avatar_filename) }}"
+            <img src="{{ upload_url(post.author.avatar_filename) }}"
                  class="w-9 h-9 rounded-full object-cover" alt="{{ post.author.display_name }}">
             {% else %}
             <div class="w-9 h-9 rounded-full bg-maroon-100 flex items-center justify-center">
@@ -26,7 +26,7 @@
     {% if show_link %}
     <a href="{{ url_for('posts.detail', id=post.id) }}">
     {% endif %}
-        <img src="{{ url_for('static', filename='uploads/' + post.photo_filename) }}"
+        <img src="{{ upload_url(post.photo_filename) }}"
              class="w-full aspect-[4/3] object-cover" alt="Bier photo" loading="lazy">
     {% if show_link %}
     </a>

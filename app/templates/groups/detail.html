@@ -10,7 +10,7 @@
 <!-- Compact Banner -->
 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 px-4 py-3 mb-4 flex items-center gap-3 relative">
     {% if group.avatar_filename %}
-    <img src="{{ url_for('static', filename='uploads/' + group.avatar_filename) }}"
+    <img src="{{ upload_url(group.avatar_filename) }}"
          class="w-10 h-10 rounded-xl object-cover flex-shrink-0">
     {% else %}
     <div class="w-10 h-10 rounded-xl bg-maroon-100 flex items-center justify-center flex-shrink-0">
@@ -104,7 +104,7 @@
                 <span class="w-6 text-center text-sm text-gray-300">–</span>
                 {% endif %}
                 {% if entry.avatar_filename %}
-                <img src="{{ url_for('static', filename='uploads/' + entry.avatar_filename) }}"
+                <img src="{{ upload_url(entry.avatar_filename) }}"
                      class="w-8 h-8 rounded-full object-cover flex-shrink-0">
                 {% else %}
                 <div class="w-8 h-8 rounded-full bg-maroon-100 flex items-center justify-center flex-shrink-0">
@@ -145,7 +145,7 @@
                 <span class="w-6 text-center text-sm text-gray-300">–</span>
                 {% endif %}
                 {% if entry.avatar_filename %}
-                <img src="{{ url_for('static', filename='uploads/' + entry.avatar_filename) }}"
+                <img src="{{ upload_url(entry.avatar_filename) }}"
                      class="w-8 h-8 rounded-full object-cover flex-shrink-0">
                 {% else %}
                 <div class="w-8 h-8 rounded-full bg-maroon-100 flex items-center justify-center flex-shrink-0">
@@ -186,7 +186,7 @@
                 <span class="w-6 text-center text-sm text-gray-300">–</span>
                 {% endif %}
                 {% if entry.avatar_filename %}
-                <img src="{{ url_for('static', filename='uploads/' + entry.avatar_filename) }}"
+                <img src="{{ upload_url(entry.avatar_filename) }}"
                      class="w-8 h-8 rounded-full object-cover flex-shrink-0">
                 {% else %}
                 <div class="w-8 h-8 rounded-full bg-maroon-100 flex items-center justify-center flex-shrink-0">
@@ -227,7 +227,7 @@
                 <span class="w-6 text-center text-sm text-gray-300">–</span>
                 {% endif %}
                 {% if entry.avatar_filename %}
-                <img src="{{ url_for('static', filename='uploads/' + entry.avatar_filename) }}"
+                <img src="{{ upload_url(entry.avatar_filename) }}"
                      class="w-8 h-8 rounded-full object-cover flex-shrink-0">
                 {% else %}
                 <div class="w-8 h-8 rounded-full bg-maroon-100 flex items-center justify-center flex-shrink-0">

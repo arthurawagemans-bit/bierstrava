@@ -53,7 +53,7 @@
 
         <!-- Avatar -->
         {% if r.avatar_filename %}
-        <img src="{{ url_for('static', filename='uploads/' + r.avatar_filename) }}"
+        <img src="{{ upload_url(r.avatar_filename) }}"
              class="w-9 h-9 rounded-full object-cover flex-shrink-0">
         {% else %}
         <div class="w-9 h-9 rounded-full bg-maroon-100 flex items-center justify-center flex-shrink-0">

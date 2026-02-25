@@ -7,7 +7,7 @@
     <div class="flex items-center gap-3">
         <div class="relative flex-shrink-0">
             {% if group.avatar_filename %}
-            <img src="{{ url_for('static', filename='uploads/' + group.avatar_filename) }}"
+            <img src="{{ upload_url(group.avatar_filename) }}"
                  class="w-12 h-12 rounded-xl object-cover" alt="{{ group.name }}">
             {% else %}
             <div class="w-12 h-12 rounded-xl bg-maroon-100 flex items-center justify-center">

@@ -93,7 +93,7 @@ document.addEventListener('DOMContentLoaded', function() {
             data.users.forEach(function(u) {
                 var avatar;
                 if (u.avatar) {
-                    avatar = '<img src="/static/uploads/' + u.avatar + '" class="mention-avatar">';
+                    avatar = '<img src="/uploads/' + u.avatar + '" class="mention-avatar">';
                 } else {
                     avatar = '<div class="mention-avatar-placeholder">' + (u.display_name[0] || '?').toUpperCase() + '</div>';
                 }

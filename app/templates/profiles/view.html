@@ -8,7 +8,7 @@
     <div class="flex items-start gap-4">
         <!-- Avatar -->
         {% if profile_user.avatar_filename %}
-        <img src="{{ url_for('static', filename='uploads/' + profile_user.avatar_filename) }}"
+        <img src="{{ upload_url(profile_user.avatar_filename) }}"
              class="w-20 h-20 rounded-full object-cover flex-shrink-0">
         {% else %}
         <div class="w-20 h-20 rounded-full bg-maroon-100 flex items-center justify-center flex-shrink-0">
