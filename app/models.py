@@ -257,6 +257,8 @@ class BeerPost(db.Model):
                              cascade='all, delete-orphan')
     _comments = db.relationship('Comment', backref='post', lazy='dynamic',
                                 cascade='all, delete-orphan')
+    _reactions = db.relationship('Reaction', backref='post', lazy='dynamic',
+                                 cascade='all, delete-orphan')
 
     # Cached counts — set by feed queries to avoid N+1, falls back to DB query
     _like_count = None
@@ -279,6 +281,20 @@ class BeerPost(db.Model):
         return Like.query.filter_by(
             user_id=user.id, post_id=self.id
         ).first() is not None
+
+    def get_reaction_counts(self):
+        """Returns dict like {'fire': 3, 'strong': 1}."""
+        rows = db.session.query(
+            Reaction.emoji, db.func.count(Reaction.id)
+        ).filter(Reaction.post_id == self.id).group_by(Reaction.emoji).all()
+        return {emoji: count for emoji, count in rows}
+
+    def user_reactions(self, user):
+        """Returns set of emoji slugs this user reacted with."""
+        rows = Reaction.query.filter_by(
+            user_id=user.id, post_id=self.id
+        ).all()
+        return {r.emoji for r in rows}
 
     def visible_to(self, user):
         """Time + caption always visible to connections and group members."""
@@ -363,3 +379,44 @@ class Comment(db.Model):
     post_id = db.Column(db.Integer, db.ForeignKey('beer_posts.id'), nullable=False, index=True)
     body = db.Column(db.String(500), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+ALLOWED_REACTIONS = {'fire', 'strong', 'party', 'laugh'}
+
+
+class Reaction(db.Model):
+    __tablename__ = 'reactions'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    post_id = db.Column(db.Integer, db.ForeignKey('beer_posts.id'), nullable=False, index=True)
+    emoji = db.Column(db.String(20), nullable=False)  # 'fire', 'strong', 'party', 'laugh'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'post_id', 'emoji', name='unique_reaction'),
+        db.Index('idx_reaction_post_emoji', 'post_id', 'emoji'),
+    )
+
+
+class Achievement(db.Model):
+    __tablename__ = 'achievements'
+
+    id = db.Column(db.Integer, primary_key=True)
+    slug = db.Column(db.String(50), unique=True, nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    icon = db.Column(db.String(10), nullable=False)
+    description = db.Column(db.String(200), nullable=False)
+
+
+class UserAchievement(db.Model):
+    __tablename__ = 'user_achievements'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    achievement_slug = db.Column(db.String(50), nullable=False)
+    unlocked_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'achievement_slug', name='unique_user_achievement'),
+    )

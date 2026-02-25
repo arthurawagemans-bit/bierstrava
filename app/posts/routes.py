@@ -4,9 +4,113 @@ from flask import render_template, redirect, url_for, flash, request, abort, cur
 from flask_login import login_required, current_user
 from . import bp
 from ..extensions import db
-from ..models import BeerPost, BeerPostGroup, Comment, GroupMember, DrinkingSession, SessionBeer, Tag, User, Group
+from datetime import datetime, timedelta
+from ..models import (BeerPost, BeerPostGroup, Comment, GroupMember, DrinkingSession,
+                      SessionBeer, Tag, User, Group, Achievement, UserAchievement, Connection)
 from .forms import BeerPostForm, CommentForm, SessionPostForm
 from .utils import process_upload
+
+
+def check_achievements(user):
+    """Check and award any newly earned achievements. Returns list of newly unlocked."""
+    newly_unlocked = []
+
+    def _award(slug):
+        if not UserAchievement.query.filter_by(user_id=user.id, achievement_slug=slug).first():
+            db.session.add(UserAchievement(user_id=user.id, achievement_slug=slug))
+            ach = Achievement.query.filter_by(slug=slug).first()
+            if ach:
+                newly_unlocked.append(ach)
+
+    # Total beers posted
+    total_beers = db.session.query(db.func.sum(BeerPost.beer_count)).filter(
+        BeerPost.user_id == user.id
+    ).scalar() or 0
+
+    # first_bier: posted at least 1 bier
+    if total_beers >= 1:
+        _award('first_bier')
+
+    # centurion: 100 total beers
+    if total_beers >= 100:
+        _award('centurion')
+
+    # speed_demon: any time under 3 seconds
+    fastest = db.session.query(db.func.min(SessionBeer.drink_time_seconds)).join(
+        DrinkingSession
+    ).filter(
+        DrinkingSession.user_id == user.id,
+        SessionBeer.drink_time_seconds.isnot(None)
+    ).scalar()
+    if fastest is not None and fastest < 3.0:
+        _award('speed_demon')
+
+    # pb_hunter: 5 PBs total
+    pb_count = db.session.query(db.func.count(SessionBeer.id)).join(
+        DrinkingSession
+    ).filter(
+        DrinkingSession.user_id == user.id,
+        SessionBeer.is_pb == True
+    ).scalar() or 0
+    if pb_count >= 5:
+        _award('pb_hunter')
+
+    # social: 5 connections
+    conn_count = Connection.query.filter(
+        db.or_(Connection.requester_id == user.id, Connection.addressee_id == user.id),
+        Connection.status == 'accepted'
+    ).count()
+    if conn_count >= 5:
+        _award('social')
+
+    # on_fire: 5 posts in one week
+    week_ago = datetime.utcnow() - timedelta(days=7)
+    week_posts = BeerPost.query.filter(
+        BeerPost.user_id == user.id,
+        BeerPost.created_at >= week_ago
+    ).count()
+    if week_posts >= 5:
+        _award('on_fire')
+
+    # consistent: 3 days in a row
+    recent_dates = db.session.query(
+        db.func.date(BeerPost.created_at)
+    ).filter(BeerPost.user_id == user.id).distinct().order_by(
+        db.func.date(BeerPost.created_at).desc()
+    ).limit(10).all()
+    dates = [r[0] for r in recent_dates]
+    if len(dates) >= 3:
+        # Check if any 3 consecutive dates are in sequence
+        for i in range(len(dates) - 2):
+            d0 = dates[i] if isinstance(dates[i], str) else str(dates[i])
+            d1 = dates[i+1] if isinstance(dates[i+1], str) else str(dates[i+1])
+            d2 = dates[i+2] if isinstance(dates[i+2], str) else str(dates[i+2])
+            try:
+                from datetime import date as dt_date
+                dd0 = dt_date.fromisoformat(d0)
+                dd1 = dt_date.fromisoformat(d1)
+                dd2 = dt_date.fromisoformat(d2)
+                if (dd0 - dd1).days == 1 and (dd1 - dd2).days == 1:
+                    _award('consistent')
+                    break
+            except (ValueError, TypeError):
+                pass
+
+    # challenger: completed a Kan
+    kan_count = db.session.query(db.func.count(SessionBeer.id)).join(
+        DrinkingSession
+    ).filter(
+        DrinkingSession.user_id == user.id,
+        SessionBeer.label == 'Kan',
+        SessionBeer.drink_time_seconds.isnot(None)
+    ).scalar() or 0
+    if kan_count >= 1:
+        _award('challenger')
+
+    if newly_unlocked:
+        db.session.commit()
+
+    return newly_unlocked
 
 
 def extract_and_save_tags(comment_text):
@@ -242,7 +346,29 @@ def create_session():
 
         extract_and_save_tags(form.caption.data)
         db.session.commit()
-        flash('Session posted!', 'success')
+
+        # PB celebration flash messages
+        has_pb = False
+        for sb in session_obj.beers:
+            label_name = sb.label or 'Bier'
+            if sb.pb_rank == 1 and sb.drink_time_seconds is not None:
+                flash(f'NEW PB! Your {label_name} time of {sb.drink_time_seconds:.3f}s is your fastest ever!', 'success')
+                has_pb = True
+            elif sb.pb_rank == 2 and sb.drink_time_seconds is not None:
+                flash(f'2nd fastest {label_name} ever! {sb.drink_time_seconds:.3f}s', 'success')
+                has_pb = True
+            elif sb.pb_rank == 3 and sb.drink_time_seconds is not None:
+                flash(f'3rd fastest {label_name} ever! {sb.drink_time_seconds:.3f}s', 'success')
+                has_pb = True
+
+        if not has_pb:
+            flash('Session posted!', 'success')
+
+        # Check achievements
+        new_achievements = check_achievements(current_user)
+        for ach in new_achievements:
+            flash(f'{ach.icon} Achievement unlocked: {ach.name}!', 'success')
+
         return redirect(url_for('posts.detail', id=post.id))
 
     flash('Something went wrong.', 'error')

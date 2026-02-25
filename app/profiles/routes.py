@@ -4,7 +4,7 @@ from sqlalchemy.orm import joinedload
 from . import bp
 from ..extensions import db
 from ..models import (User, Connection, BeerPost, SessionBeer, DrinkingSession,
-                      Like, Comment)
+                      Like, Comment, Achievement, UserAchievement)
 from .forms import EditProfileForm
 from ..posts.utils import process_upload
 from datetime import datetime, timedelta
@@ -82,12 +82,23 @@ def view(username):
                 'count': data['count'],
             })
 
+    # Achievements
+    all_achievements = Achievement.query.order_by(Achievement.id).all()
+    earned_slugs = {ua.achievement_slug for ua in
+                    UserAchievement.query.filter_by(user_id=user.id).all()}
+    achievements = [
+        {'slug': a.slug, 'name': a.name, 'icon': a.icon,
+         'description': a.description, 'earned': a.slug in earned_slugs}
+        for a in all_achievements
+    ]
+
     return render_template('profiles/view.html',
                            profile_user=user,
                            can_view=can_view,
                            stats=stats,
                            posts=posts,
                            category_stats=category_stats,
+                           achievements=achievements,
                            active_nav='profile' if user.id == current_user.id else '')
 
 

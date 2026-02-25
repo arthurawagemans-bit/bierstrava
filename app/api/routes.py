@@ -4,8 +4,8 @@ from flask import jsonify, request, abort, render_template
 from flask_login import login_required, current_user
 from . import bp
 from ..extensions import db, limiter
-from ..models import (BeerPost, Like, Comment, User, Group, Tag,
-                      Connection, GroupMember, GroupJoinRequest)
+from ..models import (BeerPost, Like, Comment, Reaction, ALLOWED_REACTIONS,
+                      User, Group, Tag, Connection, GroupMember, GroupJoinRequest)
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +30,39 @@ def toggle_like(id):
         db.session.commit()
         count = Like.query.filter_by(post_id=post.id).count()
         return jsonify(success=True, liked=True, count=count)
+
+
+@bp.route('/posts/<int:id>/reaction', methods=['POST'])
+@login_required
+@limiter.limit("60 per minute")
+def toggle_reaction(id):
+    post = BeerPost.query.get_or_404(id)
+    if not post.visible_to(current_user):
+        abort(403)
+
+    data = request.get_json()
+    emoji = data.get('emoji', '') if data else ''
+    if emoji not in ALLOWED_REACTIONS:
+        return jsonify(success=False, error='Invalid reaction'), 400
+
+    existing = Reaction.query.filter_by(
+        user_id=current_user.id, post_id=post.id, emoji=emoji
+    ).first()
+    if existing:
+        db.session.delete(existing)
+        db.session.commit()
+        toggled = False
+    else:
+        reaction = Reaction(user_id=current_user.id, post_id=post.id, emoji=emoji)
+        db.session.add(reaction)
+        try:
+            db.session.commit()
+        except IntegrityError:
+            db.session.rollback()
+        toggled = True
+
+    counts = post.get_reaction_counts()
+    return jsonify(success=True, toggled=toggled, emoji=emoji, counts=counts)
 
 
 @bp.route('/posts/<int:id>/comment', methods=['POST'])

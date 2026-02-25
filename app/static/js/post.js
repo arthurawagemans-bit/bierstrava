@@ -52,8 +52,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // ── PB value ──
     var pbValue = parseFloat(timerScreen.dataset.pb) || null;
 
+    // ── Countdown State ──
+    var countdownActive = false;
+
     // ── Stopwatch State ──
-    var state = 'idle';   // idle | running | stopped
+    var state = 'idle';   // idle | countdown | running | stopped
     var startTime = 0;
     var elapsed = 0;
     var rafId = null;
@@ -101,8 +104,49 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // ── Start ──
-    function startTimer() {
+    // ── Countdown then Start ──
+    function runCountdown() {
+        if (countdownActive) return;
+        countdownActive = true;
+        state = 'countdown';
+        hint.textContent = '';
+        hint.classList.add('opacity-50');
+        resetBtn.classList.add('hidden');
+        display.classList.remove('text-maroon');
+
+        var counts = [3, 2, 1];
+        var step = 0;
+
+        function nextStep() {
+            if (step < counts.length) {
+                display.textContent = counts[step];
+                display.classList.remove('text-green-500');
+                display.classList.add('text-gray-400');
+                display.style.transform = 'scale(1.3)';
+                display.style.transition = 'transform 0.3s ease-out';
+                setTimeout(function() { display.style.transform = 'scale(1)'; }, 150);
+                vibrate(30);
+                step++;
+                setTimeout(nextStep, 800);
+            } else {
+                // GO!
+                display.textContent = 'GO!';
+                display.classList.remove('text-gray-400');
+                display.classList.add('text-green-500');
+                display.style.transform = 'scale(1.4)';
+                setTimeout(function() { display.style.transform = 'scale(1)'; }, 200);
+                vibrate([50, 30, 50]);
+                setTimeout(function() {
+                    display.classList.remove('text-green-500');
+                    countdownActive = false;
+                    startTimerNow();
+                }, 500);
+            }
+        }
+        nextStep();
+    }
+
+    function startTimerNow() {
         state = 'running';
         startTime = performance.now();
         elapsed = 0;
@@ -162,7 +206,9 @@ document.addEventListener('DOMContentLoaded', function() {
         cancelAnimationFrame(rafId);
         elapsed = 0;
         display.textContent = '0.000';
-        hint.textContent = 'Tap anywhere to start';
+        display.style.transform = '';
+        display.style.transition = '';
+        hint.textContent = 'Tap to start countdown';
         hint.classList.remove('opacity-50');
         display.classList.remove('text-red-600', 'stopwatch-running');
         display.classList.add('text-maroon');
@@ -308,11 +354,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target.closest('#stopwatch-reset')) return;
 
         if (state === 'idle') {
-            startTimer();
+            runCountdown();
+        } else if (state === 'countdown') {
+            // Ignore taps during countdown
+            return;
         } else if (state === 'running') {
             stopTimer();
         } else if (state === 'stopped') {
-            startTimer();
+            runCountdown();
         }
     });
 

@@ -65,6 +65,17 @@
     </div>
 </div>
 
+<!-- Group Record Banner -->
+{% if group_record %}
+<div class="bg-gradient-to-r from-maroon-800 to-maroon-600 rounded-2xl text-white p-4 mb-4">
+    <p class="text-[10px] font-semibold text-white/60 uppercase tracking-wider mb-1">Group Record</p>
+    <div class="flex items-baseline gap-2">
+        <span class="text-2xl font-bold">{{ group_record.drink_time_seconds|format_time }}s</span>
+        <span class="text-sm text-white/70">by {{ group_record.display_name }}</span>
+    </div>
+</div>
+{% endif %}
+
 <!-- Leaderboard Tabs -->
 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-4">
     <div class="flex gap-1 p-2 bg-gray-50">
@@ -74,6 +85,8 @@
                 data-target="lb-month">This Month</button>
         <button class="lb-tab flex-1 text-xs font-semibold py-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
                 data-target="lb-average">Average</button>
+        <button class="lb-tab flex-1 text-xs font-semibold py-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
+                data-target="lb-week">This Week</button>
     </div>
 
     <!-- Fastest Time Leaderboard -->
@@ -187,6 +200,47 @@
                 {% if entry.metric is not none %}
                 <span class="time-badge text-xs font-bold px-2.5 py-1 rounded-full">
                     {{ entry.metric|format_time }}
+                </span>
+                {% else %}
+                <span class="text-xs text-gray-300 font-bold px-2.5 py-1">--</span>
+                {% endif %}
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-center text-sm text-gray-400 py-8">No members yet</p>
+        {% endif %}
+    </div>
+
+    <!-- This Week Leaderboard -->
+    <div id="lb-week" class="lb-panel hidden">
+        {% if lb_week %}
+        <div class="divide-y divide-gray-50">
+            {% for entry in lb_week %}
+            <a href="{{ url_for('profiles.view', username=entry.username) }}"
+               class="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors">
+                {% if entry.metric > 0 %}
+                <span class="w-6 text-center text-sm font-bold {{ 'text-yellow-500' if loop.index == 1 else 'text-gray-400' if loop.index == 2 else 'text-orange-400' if loop.index == 3 else 'text-gray-300' }}">
+                    {{ loop.index }}
+                </span>
+                {% else %}
+                <span class="w-6 text-center text-sm text-gray-300">–</span>
+                {% endif %}
+                {% if entry.avatar_filename %}
+                <img src="{{ url_for('static', filename='uploads/' + entry.avatar_filename) }}"
+                     class="w-8 h-8 rounded-full object-cover flex-shrink-0">
+                {% else %}
+                <div class="w-8 h-8 rounded-full bg-maroon-100 flex items-center justify-center flex-shrink-0">
+                    <span class="text-maroon text-xs font-bold">{{ entry.display_name[0]|upper }}</span>
+                </div>
+                {% endif %}
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-900 truncate">{{ entry.display_name }}</p>
+                    <p class="text-[11px] text-gray-400">{% if entry.last_active %}{{ entry.last_active|timeago }}{% else %}No activity{% endif %}</p>
+                </div>
+                {% if entry.metric > 0 %}
+                <span class="bg-maroon-50 text-maroon text-xs font-bold px-2.5 py-1 rounded-full">
+                    {{ entry.metric }}
                 </span>
                 {% else %}
                 <span class="text-xs text-gray-300 font-bold px-2.5 py-1">--</span>

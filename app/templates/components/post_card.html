@@ -116,7 +116,7 @@
     <p class="px-4 py-2 text-sm text-gray-700">{{ post.caption|render_mentions }}</p>
     {% endif %}
 
-    <!-- Actions: like + comment -->
+    <!-- Actions: like + comment + share -->
     <div class="px-4 py-2.5 flex items-center gap-5 border-t border-gray-100">
         <button class="like-btn flex items-center gap-1.5 text-sm {{ 'liked text-maroon' if post.is_liked_by(current_user) else 'text-gray-500' }}"
                 data-post-id="{{ post.id }}">
@@ -133,6 +133,28 @@
             </svg>
             <span class="font-medium">{{ post.comment_count() }}</span>
         </a>
+        <button class="share-btn ml-auto flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600"
+                data-post-id="{{ post.id }}" data-post-url="{{ url_for('posts.detail', id=post.id, _external=True) }}"
+                data-post-text="{{ post.author.display_name }} — {{ post.drink_time_seconds|format_time if post.drink_time_seconds else 'VDL' }}">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- Reactions -->
+    {% set rcounts = post.get_reaction_counts() %}
+    {% set user_reacted = post.user_reactions(current_user) %}
+    <div class="px-4 pb-3 flex items-center gap-2" data-post-id="{{ post.id }}">
+        {% for key, label in [('fire', '🔥'), ('strong', '💪'), ('party', '🎉'), ('laugh', '😂')] %}
+        <button class="reaction-btn flex items-center gap-0.5 text-xs px-2 py-1 rounded-full border transition-colors
+                       {{ 'bg-maroon-50 border-maroon-200 text-maroon' if key in user_reacted else 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100' }}"
+                data-post-id="{{ post.id }}" data-emoji="{{ key }}">
+            <span>{{ label }}</span>
+            <span class="reaction-count font-medium">{{ rcounts.get(key, '') }}</span>
+        </button>
+        {% endfor %}
     </div>
 </div>
 {% endmacro %}

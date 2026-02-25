@@ -125,5 +125,22 @@ def create_app(config_class=Config):
             db.session.execute(db.text('PRAGMA synchronous=NORMAL'))
             db.session.commit()
 
+        # Seed achievements if not exist
+        from .models import Achievement
+        _achievements = [
+            ('first_bier', 'First Bier', '🍺', 'Post your first bier'),
+            ('speed_demon', 'Speed Demon', '🏃', 'Record a time under 3 seconds'),
+            ('on_fire', 'On Fire', '🔥', 'Post 5 times in one week'),
+            ('centurion', 'Centurion', '👑', 'Post 100 biers total'),
+            ('pb_hunter', 'PB Hunter', '🥇', 'Beat your personal best 5 times'),
+            ('social', 'Social Butterfly', '🫂', 'Connect with 5 people'),
+            ('consistent', 'Consistent', '🎯', 'Post 3 days in a row'),
+            ('challenger', 'Challenger', '🏆', 'Complete a Kan challenge'),
+        ]
+        for slug, name, icon, desc in _achievements:
+            if not Achievement.query.filter_by(slug=slug).first():
+                db.session.add(Achievement(slug=slug, name=name, icon=icon, description=desc))
+        db.session.commit()
+
     logger.info('BierStrava app initialised')
     return app
