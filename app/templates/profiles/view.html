@@ -56,7 +56,7 @@
     <!-- Connection stats -->
     <div class="flex items-center gap-6 mt-4 text-sm">
         {% if can_view %}
-        <a href="{{ url_for('profiles.connecties', username=profile_user.username) }}" class="text-center">
+        <a href="{{ url_for('profiles.connections', username=profile_user.username) }}" class="text-center">
             <span class="font-bold text-gray-900">{{ profile_user.connection_count() }}</span>
             <span class="text-gray-500 ml-1">connecties</span>
         </a>
