@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', function() {
         startTime = performance.now();
         elapsed = 0;
 
-        hint.textContent = 'Tap anywhere to stop';
+        hint.textContent = 'Tik ergens om te stoppen';
         hint.classList.add('opacity-50');
         resetBtn.classList.add('hidden');
 
@@ -173,7 +173,7 @@ document.addEventListener('DOMContentLoaded', function() {
         elapsed = (performance.now() - startTime) / 1000;
         display.textContent = formatMs(elapsed);
 
-        hint.textContent = 'Tap to time another';
+        hint.textContent = 'Tik om nog een te timen';
         hint.classList.remove('opacity-50');
         resetBtn.classList.remove('hidden');
 
@@ -210,7 +210,7 @@ document.addEventListener('DOMContentLoaded', function() {
         display.textContent = '0.000';
         display.style.transform = '';
         display.style.transition = '';
-        hint.textContent = countdownEnabled ? 'Tap to start countdown' : 'Tap anywhere to start';
+        hint.textContent = countdownEnabled ? 'Tik om aftelling te starten' : 'Tik ergens om te starten';
         hint.classList.remove('opacity-50');
         display.classList.remove('text-red-600', 'stopwatch-running');
         display.classList.add('text-maroon');
@@ -292,11 +292,11 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '<div class="flex items-center gap-2 flex-1 min-w-0">';
             html += '<span class="text-sm text-gray-700 font-medium flex-shrink-0">' + entryLabel + '</span>';
             if (beer.pb_rank === 1) {
-                html += '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 flex-shrink-0">PB!</span>';
+                html += '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 flex-shrink-0">PR!</span>';
             } else if (beer.pb_rank === 2) {
-                html += '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-600 flex-shrink-0">2nd</span>';
+                html += '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-600 flex-shrink-0">2e</span>';
             } else if (beer.pb_rank === 3) {
-                html += '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-500 flex-shrink-0">3rd</span>';
+                html += '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-500 flex-shrink-0">3e</span>';
             }
             if (beer.beer_count > 1) {
                 html += '<span class="text-[11px] text-gray-400 flex-shrink-0">(' + beer.beer_count + ')</span>';
@@ -347,7 +347,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update beer count display
         var countEl = document.getElementById('session-beer-count');
         if (countEl) {
-            countEl.textContent = totalBeers + ' bier' + (totalBeers !== 1 ? 's' : '');
+            countEl.textContent = totalBeers + ' bier' + (totalBeers !== 1 ? 'en' : '');
         }
     }
 
@@ -402,7 +402,7 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.addEventListener('click', function() {
             var beers = parseInt(this.dataset.beers);
             pendingBeerCount = beers;
-            pendingLabel = challengeNames[beers] || (beers + ' biers');
+            pendingLabel = challengeNames[beers] || (beers + ' bieren');
             showTimerScreen();
         });
     });
@@ -436,11 +436,11 @@ document.addEventListener('DOMContentLoaded', function() {
             html += '<div class="flex items-center gap-1.5 flex-1 min-w-0">';
             html += '<span class="text-sm font-medium text-gray-700 flex-shrink-0">' + label + '</span>';
             if (beer.pb_rank === 1) {
-                html += '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 flex-shrink-0">PB!</span>';
+                html += '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 flex-shrink-0">PR!</span>';
             } else if (beer.pb_rank === 2) {
-                html += '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-600 flex-shrink-0">2nd</span>';
+                html += '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-600 flex-shrink-0">2e</span>';
             } else if (beer.pb_rank === 3) {
-                html += '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-500 flex-shrink-0">3rd</span>';
+                html += '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-500 flex-shrink-0">3e</span>';
             }
             if (beer.beer_count && beer.beer_count > 1) {
                 html += '<span class="text-[11px] text-gray-400 flex-shrink-0">(' + beer.beer_count + ')</span>';
@@ -458,8 +458,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         html += '<div class="flex items-center justify-between pt-1.5 border-t border-gray-200">';
-        html += '<span class="text-xs font-semibold text-gray-500">Session total</span>';
-        html += '<span class="text-xs font-bold text-maroon">' + totalBeers + ' bier' + (totalBeers !== 1 ? 's' : '') + '</span>';
+        html += '<span class="text-xs font-semibold text-gray-500">Sessie totaal</span>';
+        html += '<span class="text-xs font-bold text-maroon">' + totalBeers + ' bier' + (totalBeers !== 1 ? 'en' : '') + '</span>';
         html += '</div></div>';
         timeBar.innerHTML = html;
 
@@ -491,7 +491,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var shares = [];
         var publicCheckbox = sessionForm.querySelector('input[name="is_public"]');
         if (publicCheckbox && publicCheckbox.checked) {
-            shares.push('Your connections');
+            shares.push('Je connecties');
         }
         sessionForm.querySelectorAll('input[name="groups"]:checked').forEach(function(cb) {
             var label = cb.closest('label');
@@ -499,7 +499,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 shares.push(label.querySelector('span').textContent.trim());
             }
         });
-        shareList.textContent = shares.length ? shares.join(', ') : 'No one (private)';
+        shareList.textContent = shares.length ? shares.join(', ') : 'Niemand (privé)';
     }
 
     function escapeHtml(text) {
@@ -511,7 +511,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (previewBtn) {
         previewBtn.addEventListener('click', function() {
             if (sessionBeers.length < 1) {
-                alert('Add at least one bier to your session first.');
+                alert('Voeg eerst minstens één bier aan je sessie toe.');
                 return;
             }
             showPreview();

@@ -28,7 +28,7 @@ def login():
                 next_page = None
             return redirect(next_page or url_for('main.feed'))
         logger.warning('Failed login attempt for: %s', form.username.data.lower())
-        flash('Invalid username or password.', 'error')
+        flash('Ongeldige gebruikersnaam of wachtwoord.', 'error')
 
     return render_template('auth/login.html', form=form)
 
@@ -66,5 +66,5 @@ def onboarding():
 @login_required
 def logout():
     logout_user()
-    flash('You have been logged out.', 'info')
+    flash('Je bent uitgelogd.', 'info')
     return redirect(url_for('auth.login'))

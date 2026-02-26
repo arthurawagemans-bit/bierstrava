@@ -4,16 +4,16 @@
 
 {% block content %}
 <div class="flex items-center justify-between mb-6">
-    <h1 class="text-xl font-bold">Groups</h1>
+    <h1 class="text-xl font-bold">Groepen</h1>
     <a href="{{ url_for('groups.create') }}"
        class="bg-maroon text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-maroon-700 transition-colors">
-        + New Group
+        + Nieuwe Groep
     </a>
 </div>
 
 {% if groups %}
 <div class="mb-6">
-    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">My Groups</h2>
+    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Mijn Groepen</h2>
     {% for group in groups %}
         {{ render_group(group, current_user) }}
     {% endfor %}
@@ -22,7 +22,7 @@
 
 {% if discover_groups %}
 <div class="mb-4">
-    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Discover Groups</h2>
+    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Ontdek Groepen</h2>
     <div class="space-y-2">
         {% for g in discover_groups %}
         <div class="flex items-center gap-3 py-2.5 px-3 bg-white rounded-xl border border-gray-100">
@@ -35,14 +35,14 @@
             {% endif %}
             <div class="flex-1 min-w-0">
                 <p class="font-semibold text-sm text-gray-900 truncate">{{ g.name }}</p>
-                <p class="text-xs text-gray-400 truncate">{{ g.member_count() }} member{{ 's' if g.member_count() != 1 }}</p>
+                <p class="text-xs text-gray-400 truncate">{{ g.member_count() }} {{ 'leden' if g.member_count() != 1 else 'lid' }}</p>
             </div>
             {% if g.is_private %}
             <button class="discover-join-btn text-xs bg-maroon text-white px-3.5 py-1.5 rounded-full font-medium flex-shrink-0"
-                    data-group-id="{{ g.id }}">Request</button>
+                    data-group-id="{{ g.id }}">Aanvragen</button>
             {% else %}
             <button class="discover-join-btn text-xs bg-maroon text-white px-3.5 py-1.5 rounded-full font-medium flex-shrink-0"
-                    data-group-id="{{ g.id }}">Join</button>
+                    data-group-id="{{ g.id }}">Deelnemen</button>
             {% endif %}
         </div>
         {% endfor %}
@@ -58,8 +58,8 @@
                   d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
         </svg>
     </div>
-    <h3 class="text-gray-600 font-semibold mb-1">No groups yet</h3>
-    <p class="text-gray-400 text-sm">Create a group to compete with your mates!</p>
+    <h3 class="text-gray-600 font-semibold mb-1">Nog geen groepen</h3>
+    <p class="text-gray-400 text-sm">Maak een groep aan om met je maten te strijden!</p>
 </div>
 {% endif %}
 {% endblock %}
@@ -86,13 +86,13 @@ document.addEventListener('DOMContentLoaded', function() {
             ajaxPost('/api/groups/' + groupId + '/join').then(function(data) {
                 if (data.success) {
                     if (data.status === 'member') {
-                        self.outerHTML = '<span class="text-xs text-gray-400 font-medium flex-shrink-0">Member</span>';
+                        self.outerHTML = '<span class="text-xs text-gray-400 font-medium flex-shrink-0">Lid</span>';
                     } else {
-                        self.outerHTML = '<span class="text-xs text-maroon-300 font-medium flex-shrink-0">Requested</span>';
+                        self.outerHTML = '<span class="text-xs text-maroon-300 font-medium flex-shrink-0">Aangevraagd</span>';
                     }
                 } else {
                     self.disabled = false;
-                    self.textContent = 'Join';
+                    self.textContent = 'Deelnemen';
                 }
             }).catch(function() {
                 self.disabled = false;

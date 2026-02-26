@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 history.replaceState(null, '', '?q=' + encodeURIComponent(q));
             })
             .catch(function() {
-                results.innerHTML = emptyMsg('Search failed. Try again.');
+                results.innerHTML = emptyMsg('Zoeken mislukt. Probeer opnieuw.');
             });
     }
 
@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 renderSuggestions(data);
             })
             .catch(function() {
-                results.innerHTML = emptyMsg('Search for users or groups...');
+                results.innerHTML = emptyMsg('Zoek gebruikers of groepen...');
             });
     }
 
@@ -89,19 +89,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (data.users && data.users.length) {
             found = true;
-            html += sectionHeader('People');
+            html += sectionHeader('Mensen');
             data.users.forEach(function(u) { html += userCard(u); });
         }
 
         if (data.groups && data.groups.length) {
             found = true;
             if (data.users && data.users.length) html += '<div class="mt-4"></div>';
-            html += sectionHeader('Groups');
+            html += sectionHeader('Groepen');
             data.groups.forEach(function(g) { html += groupCard(g); });
         }
 
         if (!found) {
-            html = emptyMsg('No results for \u201c' + esc(q) + '\u201d');
+            html = emptyMsg('Geen resultaten voor \u201c' + esc(q) + '\u201d');
         }
 
         results.innerHTML = html;
@@ -112,18 +112,18 @@ document.addEventListener('DOMContentLoaded', function() {
         var html = '';
 
         if (data.users && data.users.length) {
-            html += sectionHeader('Suggested');
+            html += sectionHeader('Voorgesteld');
             data.users.forEach(function(u) { html += userCard(u); });
         }
 
         if (data.groups && data.groups.length) {
             if (html) html += '<div class="mt-4"></div>';
-            html += sectionHeader('Discover Groups');
+            html += sectionHeader('Ontdek Groepen');
             data.groups.forEach(function(g) { html += groupCard(g); });
         }
 
         if (!html) {
-            html = emptyMsg('Search for users or groups...');
+            html = emptyMsg('Zoek gebruikers of groepen...');
         }
 
         results.innerHTML = html;
@@ -143,13 +143,13 @@ document.addEventListener('DOMContentLoaded', function() {
         var action = '';
         var s = u.connection_status;
         if (s === 'accepted') {
-            action = '<span class="text-xs text-gray-400 font-medium flex-shrink-0">Connected</span>';
+            action = '<span class="text-xs text-gray-400 font-medium flex-shrink-0">Verbonden</span>';
         } else if (s === 'pending') {
-            action = '<span class="text-xs text-maroon-300 font-medium flex-shrink-0">Requested</span>';
+            action = '<span class="text-xs text-maroon-300 font-medium flex-shrink-0">Aangevraagd</span>';
         } else if (s === 'incoming_pending') {
-            action = '<button class="connect-btn text-xs bg-maroon text-white px-3.5 py-1.5 rounded-full font-medium flex-shrink-0" data-username="' + esc(u.username) + '">Accept</button>';
+            action = '<button class="connect-btn text-xs bg-maroon text-white px-3.5 py-1.5 rounded-full font-medium flex-shrink-0" data-username="' + esc(u.username) + '">Accepteren</button>';
         } else {
-            action = '<button class="connect-btn text-xs bg-maroon text-white px-3.5 py-1.5 rounded-full font-medium flex-shrink-0" data-username="' + esc(u.username) + '">Connect</button>';
+            action = '<button class="connect-btn text-xs bg-maroon text-white px-3.5 py-1.5 rounded-full font-medium flex-shrink-0" data-username="' + esc(u.username) + '">Verbinden</button>';
         }
 
         return '<div class="flex items-center gap-3 py-2.5 px-3 bg-white rounded-xl mb-2 border border-gray-100">'
@@ -173,15 +173,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 + '<span class="text-maroon font-bold text-lg">' + esc(ch) + '</span></div>';
         }
 
-        var members = g.member_count + ' member' + (g.member_count !== 1 ? 's' : '');
+        var members = g.member_count + ' ' + (g.member_count !== 1 ? 'leden' : 'lid');
 
         var action = '';
         if (g.is_member) {
-            action = '<a href="/groups/' + g.id + '" class="text-xs text-gray-400 font-medium flex-shrink-0">Member</a>';
+            action = '<a href="/groups/' + g.id + '" class="text-xs text-gray-400 font-medium flex-shrink-0">Lid</a>';
         } else if (g.has_pending_request) {
-            action = '<span class="text-xs text-maroon-300 font-medium flex-shrink-0">Requested</span>';
+            action = '<span class="text-xs text-maroon-300 font-medium flex-shrink-0">Aangevraagd</span>';
         } else {
-            action = '<button class="join-btn text-xs bg-maroon text-white px-3.5 py-1.5 rounded-full font-medium flex-shrink-0" data-group-id="' + g.id + '">Request to Join</button>';
+            action = '<button class="join-btn text-xs bg-maroon text-white px-3.5 py-1.5 rounded-full font-medium flex-shrink-0" data-group-id="' + g.id + '">Verzoek tot deelname</button>';
         }
 
         return '<div class="flex items-center gap-3 py-2.5 px-3 bg-white rounded-xl mb-2 border border-gray-100">'
@@ -206,14 +206,14 @@ document.addEventListener('DOMContentLoaded', function() {
             ajaxPost('/api/connect/' + username).then(function(data) {
                 if (data.success) {
                     if (data.status === 'accepted') {
-                        connectBtn.outerHTML = '<span class="text-xs text-gray-400 font-medium flex-shrink-0">Connected</span>';
+                        connectBtn.outerHTML = '<span class="text-xs text-gray-400 font-medium flex-shrink-0">Verbonden</span>';
                     } else {
-                        connectBtn.outerHTML = '<span class="text-xs text-maroon-300 font-medium flex-shrink-0">Requested</span>';
+                        connectBtn.outerHTML = '<span class="text-xs text-maroon-300 font-medium flex-shrink-0">Aangevraagd</span>';
                     }
                 }
             }).catch(function() {
                 connectBtn.disabled = false;
-                connectBtn.textContent = 'Connect';
+                connectBtn.textContent = 'Verbinden';
             });
             return;
         }
@@ -227,14 +227,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
             ajaxPost('/api/groups/' + groupId + '/join').then(function(data) {
                 if (data.success) {
-                    joinBtn.outerHTML = '<span class="text-xs text-maroon-300 font-medium flex-shrink-0">Requested</span>';
+                    joinBtn.outerHTML = '<span class="text-xs text-maroon-300 font-medium flex-shrink-0">Aangevraagd</span>';
                 } else {
                     joinBtn.disabled = false;
-                    joinBtn.textContent = 'Request to Join';
+                    joinBtn.textContent = 'Verzoek tot deelname';
                 }
             }).catch(function() {
                 joinBtn.disabled = false;
-                joinBtn.textContent = 'Request to Join';
+                joinBtn.textContent = 'Verzoek tot deelname';
             });
             return;
         }

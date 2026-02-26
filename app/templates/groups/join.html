@@ -13,7 +13,7 @@
     {% endif %}
 
     <h1 class="text-xl font-bold mb-1">{{ group.name }}</h1>
-    <p class="text-gray-500 text-sm mb-1">{{ group.member_count() }} members</p>
+    <p class="text-gray-500 text-sm mb-1">{{ group.member_count() }} leden</p>
     {% if group.description %}
     <p class="text-gray-600 text-sm mb-6 max-w-xs">{{ group.description }}</p>
     {% else %}
@@ -24,7 +24,7 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit"
                 class="bg-maroon text-white px-8 py-3 rounded-xl font-semibold hover:bg-maroon-700 transition-colors shadow-md">
-            Join Group
+            Deelnemen
         </button>
     </form>
 </div>

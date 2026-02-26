@@ -42,7 +42,7 @@ def view(username):
         }
 
         posts = BeerPost.query.filter_by(user_id=user.id).options(
-            joinedload(BeerPost.session).joinedload(DrinkingSession.beers),
+            joinedload(BeerPost.session).subqueryload(DrinkingSession.beers),
         ).order_by(BeerPost.created_at.desc()).limit(50).all()
 
         # Batch annotate posts with like/comment counts
@@ -91,9 +91,9 @@ def view(username):
     # Group achievements by category prefix (e.g. 'bier', 'speed', etc.)
     cat_order = ['bier', 'speed', 'social', 'streak', 'pb', 'challenge', 'weekly']
     cat_labels = {
-        'bier': 'Biers', 'speed': 'Speed', 'social': 'Social',
-        'streak': 'Streak', 'pb': 'Personal Bests',
-        'challenge': 'Challenges', 'weekly': 'Weekly',
+        'bier': 'Bieren', 'speed': 'Snelheid', 'social': 'Sociaal',
+        'streak': 'Reeks', 'pb': 'Persoonlijke Records',
+        'challenge': 'Challenges', 'weekly': 'Wekelijks',
     }
     cat_map = OrderedDict((k, []) for k in cat_order)
     for a in all_achievements:
@@ -238,7 +238,7 @@ def connect(username):
     ).first()
 
     if existing:
-        flash('Connection already exists or pending.', 'info')
+        flash('Connectie bestaat al of is in afwachting.', 'info')
         return redirect(url_for('profiles.view', username=username))
 
     # Check if they already sent us a request — auto-accept both
@@ -256,7 +256,7 @@ def connect(username):
         )
         db.session.add(conn)
         db.session.commit()
-        flash(f'Connected with {user.display_name}!', 'success')
+        flash(f'Verbonden met {user.display_name}!', 'success')
         return redirect(url_for('profiles.view', username=username))
 
     # Always requires acceptance (LinkedIn-style)
@@ -268,7 +268,7 @@ def connect(username):
     db.session.add(conn)
     db.session.commit()
 
-    flash('Connection request sent!', 'success')
+    flash('Connectieverzoek verstuurd!', 'success')
 
     return redirect(url_for('profiles.view', username=username))
 
@@ -292,7 +292,7 @@ def disconnect(username):
         db.session.delete(reverse)
 
     db.session.commit()
-    flash(f'Disconnected from {user.display_name}.', 'success')
+    flash(f'Losgekoppeld van {user.display_name}.', 'success')
     return redirect(url_for('profiles.view', username=username))
 
 
@@ -329,7 +329,7 @@ def accept_request(id):
         reverse.status = 'accepted'
 
     db.session.commit()
-    flash('Connection request accepted!', 'success')
+    flash('Connectieverzoek geaccepteerd!', 'success')
     return redirect(url_for('profiles.connection_requests'))
 
 
@@ -342,7 +342,7 @@ def reject_request(id):
 
     db.session.delete(conn)
     db.session.commit()
-    flash('Connection request declined.', 'success')
+    flash('Connectieverzoek afgewezen.', 'success')
     return redirect(url_for('profiles.connection_requests'))
 
 

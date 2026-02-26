@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "components/post_card.html" import render_post %}
-{% block title %}Feed - VEAU{% endblock %}
+{% block title %}Home - VEAU{% endblock %}
 
 {% block content %}
 <!-- Header -->
@@ -27,8 +27,8 @@
 {% if suggested_users %}
 <div class="mb-5">
     <div class="flex items-center justify-between mb-3">
-        <h2 class="text-sm font-semibold text-gray-500">People you might know</h2>
-        <a href="{{ url_for('search.index') }}" class="text-xs text-maroon font-medium">See all</a>
+        <h2 class="text-sm font-semibold text-gray-500">Mensen die je misschien kent</h2>
+        <a href="{{ url_for('search.index') }}" class="text-xs text-maroon font-medium">Alles bekijken</a>
     </div>
     <div class="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
         {% for user in suggested_users %}
@@ -63,16 +63,16 @@
                           d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
             </div>
-            <h3 class="text-gray-700 font-semibold mb-1">Time your first bier!</h3>
-            <p class="text-gray-400 text-sm mb-5">Tap the + button below to start a session.<br>Connect with friends to see their biers here.</p>
+            <h3 class="text-gray-700 font-semibold mb-1">Time je eerste bier!</h3>
+            <p class="text-gray-400 text-sm mb-5">Tik op de + knop om een sessie te starten.<br>Verbind met vrienden om hun bieren hier te zien.</p>
             <div class="flex flex-col items-center gap-3">
                 <a href="{{ url_for('posts.create') }}"
                    class="inline-block bg-maroon text-white px-6 py-2.5 rounded-full text-sm font-semibold shadow-md">
-                    Start a session
+                    Start een sessie
                 </a>
                 <a href="{{ url_for('search.index') }}"
                    class="inline-block text-maroon text-sm font-medium">
-                    Find friends
+                    Vrienden zoeken
                 </a>
             </div>
         </div>

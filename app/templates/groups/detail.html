@@ -39,7 +39,7 @@
     <div id="gear-dropdown" class="hidden absolute right-4 top-14 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-30 min-w-[160px]">
         <a href="{{ url_for('groups.invite', id=group.id) }}"
            class="flex items-center justify-between px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-            <span>Invite people</span>
+            <span>Mensen uitnodigen</span>
             {% if is_admin and pending_count %}
             <span class="bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">{{ pending_count }}</span>
             {% endif %}
@@ -47,19 +47,19 @@
         {% if is_admin %}
         <a href="{{ url_for('groups.manage', id=group.id) }}"
            class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-            Manage members
+            Leden beheren
         </a>
         <a href="{{ url_for('groups.edit', id=group.id) }}"
            class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-            Edit group
+            Groep bewerken
         </a>
         {% endif %}
         <form method="POST" action="{{ url_for('groups.leave', id=group.id) }}"
-              onsubmit="return confirm('Leave this group?')">
+              onsubmit="return confirm('Deze groep verlaten?')">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit"
                     class="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors">
-                Leave group
+                Groep verlaten
             </button>
         </form>
     </div>
@@ -68,10 +68,10 @@
 <!-- Group Record Banner -->
 {% if group_record %}
 <div class="bg-gradient-to-r from-maroon-800 to-maroon-600 rounded-2xl text-white p-4 mb-4">
-    <p class="text-[10px] font-semibold text-white/60 uppercase tracking-wider mb-1">Group Record</p>
+    <p class="text-[10px] font-semibold text-white/60 uppercase tracking-wider mb-1">Groeprecord</p>
     <div class="flex items-baseline gap-2">
         <span class="text-2xl font-bold">{{ group_record.drink_time_seconds|format_time }}s</span>
-        <span class="text-sm text-white/70">by {{ group_record.display_name }}</span>
+        <span class="text-sm text-white/70">door {{ group_record.display_name }}</span>
     </div>
 </div>
 {% endif %}
@@ -80,13 +80,13 @@
 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-4">
     <div class="flex gap-1 p-2 bg-gray-50">
         <button class="lb-tab flex-1 text-xs font-semibold py-2 rounded-lg bg-maroon text-white transition-colors"
-                data-target="lb-fastest">Fastest</button>
+                data-target="lb-fastest">Snelste</button>
         <button class="lb-tab flex-1 text-xs font-semibold py-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
-                data-target="lb-month">This Month</button>
+                data-target="lb-month">Deze Maand</button>
         <button class="lb-tab flex-1 text-xs font-semibold py-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
-                data-target="lb-average">Average</button>
+                data-target="lb-average">Gemiddelde</button>
         <button class="lb-tab flex-1 text-xs font-semibold py-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
-                data-target="lb-week">This Week</button>
+                data-target="lb-week">Deze Week</button>
     </div>
 
     <!-- Fastest Time Leaderboard -->
@@ -113,7 +113,7 @@
                 {% endif %}
                 <div class="flex-1 min-w-0">
                     <p class="text-sm font-medium text-gray-900 truncate">{{ entry.display_name }}</p>
-                    <p class="text-[11px] text-gray-400">{{ entry.total_beers }} bier{{ 's' if entry.total_beers != 1 }}{% if entry.last_active %} · {{ entry.last_active|timeago }}{% endif %}</p>
+                    <p class="text-[11px] text-gray-400">{{ entry.total_beers }} {{ 'bieren' if entry.total_beers != 1 else 'bier' }}{% if entry.last_active %} · {{ entry.last_active|timeago }}{% endif %}</p>
                 </div>
                 {% if entry.metric is not none %}
                 <span class="time-badge text-xs font-bold px-2.5 py-1 rounded-full">
@@ -126,7 +126,7 @@
             {% endfor %}
         </div>
         {% else %}
-        <p class="text-center text-sm text-gray-400 py-8">No members yet</p>
+        <p class="text-center text-sm text-gray-400 py-8">Nog geen leden</p>
         {% endif %}
     </div>
 
@@ -154,7 +154,7 @@
                 {% endif %}
                 <div class="flex-1 min-w-0">
                     <p class="text-sm font-medium text-gray-900 truncate">{{ entry.display_name }}</p>
-                    <p class="text-[11px] text-gray-400">{% if entry.last_active %}{{ entry.last_active|timeago }}{% else %}No activity{% endif %}</p>
+                    <p class="text-[11px] text-gray-400">{% if entry.last_active %}{{ entry.last_active|timeago }}{% else %}Geen activiteit{% endif %}</p>
                 </div>
                 {% if entry.metric > 0 %}
                 <span class="bg-maroon-50 text-maroon text-xs font-bold px-2.5 py-1 rounded-full">
@@ -167,7 +167,7 @@
             {% endfor %}
         </div>
         {% else %}
-        <p class="text-center text-sm text-gray-400 py-8">No members yet</p>
+        <p class="text-center text-sm text-gray-400 py-8">Nog geen leden</p>
         {% endif %}
     </div>
 
@@ -195,7 +195,7 @@
                 {% endif %}
                 <div class="flex-1 min-w-0">
                     <p class="text-sm font-medium text-gray-900 truncate">{{ entry.display_name }}</p>
-                    <p class="text-[11px] text-gray-400">{{ entry.total_beers }} bier{{ 's' if entry.total_beers != 1 }}{% if entry.last_active %} · {{ entry.last_active|timeago }}{% endif %}</p>
+                    <p class="text-[11px] text-gray-400">{{ entry.total_beers }} {{ 'bieren' if entry.total_beers != 1 else 'bier' }}{% if entry.last_active %} · {{ entry.last_active|timeago }}{% endif %}</p>
                 </div>
                 {% if entry.metric is not none %}
                 <span class="time-badge text-xs font-bold px-2.5 py-1 rounded-full">
@@ -208,7 +208,7 @@
             {% endfor %}
         </div>
         {% else %}
-        <p class="text-center text-sm text-gray-400 py-8">No members yet</p>
+        <p class="text-center text-sm text-gray-400 py-8">Nog geen leden</p>
         {% endif %}
     </div>
 
@@ -236,7 +236,7 @@
                 {% endif %}
                 <div class="flex-1 min-w-0">
                     <p class="text-sm font-medium text-gray-900 truncate">{{ entry.display_name }}</p>
-                    <p class="text-[11px] text-gray-400">{% if entry.last_active %}{{ entry.last_active|timeago }}{% else %}No activity{% endif %}</p>
+                    <p class="text-[11px] text-gray-400">{% if entry.last_active %}{{ entry.last_active|timeago }}{% else %}Geen activiteit{% endif %}</p>
                 </div>
                 {% if entry.metric > 0 %}
                 <span class="bg-maroon-50 text-maroon text-xs font-bold px-2.5 py-1 rounded-full">
@@ -249,21 +249,21 @@
             {% endfor %}
         </div>
         {% else %}
-        <p class="text-center text-sm text-gray-400 py-8">No members yet</p>
+        <p class="text-center text-sm text-gray-400 py-8">Nog geen leden</p>
         {% endif %}
     </div>
 </div>
 
 <!-- Group Posts -->
-<h3 class="text-sm font-semibold text-gray-700 mb-3">Recent Posts</h3>
+<h3 class="text-sm font-semibold text-gray-700 mb-3">Recente Berichten</h3>
 {% if posts %}
     {% for post in posts %}
         {{ render_post(post, current_user) }}
     {% endfor %}
 {% else %}
 <div class="text-center py-10">
-    <p class="text-gray-400 text-sm mb-3">No posts in this group yet.</p>
-    <a href="{{ url_for('posts.create') }}" class="text-maroon text-sm font-medium">Post the first bier!</a>
+    <p class="text-gray-400 text-sm mb-3">Nog geen berichten in deze groep.</p>
+    <a href="{{ url_for('posts.create') }}" class="text-maroon text-sm font-medium">Post het eerste bier!</a>
 </div>
 {% endif %}
 {% endblock %}

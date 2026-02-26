@@ -2,14 +2,14 @@
 {% block title %}Leaderboard - VEAU{% endblock %}
 
 {% block content %}
-<h1 class="text-xl font-bold mb-4">Leaderboard</h1>
+<h1 class="text-xl font-bold mb-4">Ranglijst</h1>
 
 <!-- Group Tabs -->
 <div class="flex gap-2 overflow-x-auto pb-2 mb-2 -mx-4 px-4 scrollbar-hide">
     <a href="{{ url_for('leaderboard.index', period=current_period) }}"
        class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors
               {{ 'bg-maroon text-white' if not current_group_id else 'bg-white text-gray-600 border border-gray-200' }}">
-        Global
+        Globaal
     </a>
     {% for group in groups %}
     <a href="{{ url_for('leaderboard.index', group=group.id, period=current_period) }}"
@@ -22,7 +22,7 @@
 
 <!-- Period Filter -->
 <div class="flex gap-1 bg-gray-100 rounded-xl p-1 mb-4">
-    {% for period, label in [('all', 'All Time'), ('month', 'Month'), ('week', 'Week')] %}
+    {% for period, label in [('all', 'Altijd'), ('month', 'Maand'), ('week', 'Week')] %}
     <a href="{{ url_for('leaderboard.index', period=period, group=current_group_id) }}"
        class="flex-1 text-center py-2 rounded-lg text-sm font-medium transition-colors
               {{ 'bg-white text-maroon shadow-sm' if current_period == period else 'text-gray-500' }}">
@@ -67,7 +67,7 @@
                class="font-semibold text-sm truncate block {{ 'text-maroon' if r.id == current_user.id else 'text-gray-900' }}">
                 {{ r.display_name }}
             </a>
-            <p class="text-xs text-gray-400">{{ r.total_beers }} bier{{ 's' if r.total_beers != 1 }}</p>
+            <p class="text-xs text-gray-400">{{ r.total_beers }} {{ 'bieren' if r.total_beers != 1 else 'bier' }}</p>
         </div>
 
         <!-- Best Time -->
@@ -75,7 +75,7 @@
             <span class="time-badge text-xs font-bold px-2.5 py-1 rounded-full">
                 {{ r.best_time|format_time }}
             </span>
-            <p class="text-[10px] text-gray-400 mt-1">avg {{ r.avg_time|format_time if r.avg_time else '--' }}</p>
+            <p class="text-[10px] text-gray-400 mt-1">gem. {{ r.avg_time|format_time if r.avg_time else '--' }}</p>
         </div>
     </div>
     {% endfor %}
@@ -88,12 +88,12 @@
                   d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
         </svg>
     </div>
-    <h3 class="text-gray-600 font-semibold mb-1">No rankings yet</h3>
+    <h3 class="text-gray-600 font-semibold mb-1">Nog geen ranglijst</h3>
     <p class="text-gray-400 text-sm">
         {% if current_group_id %}
-        Post biers to this group to appear here.
+        Post bieren in deze groep om hier te verschijnen.
         {% else %}
-        Make a public post to appear on the global leaderboard.
+        Maak een openbaar bericht om op de globale ranglijst te verschijnen.
         {% endif %}
     </p>
 </div>

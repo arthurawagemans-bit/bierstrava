@@ -8,7 +8,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
         </svg>
     </a>
-    <h1 class="text-lg font-bold">Invite People</h1>
+    <h1 class="text-lg font-bold">Mensen Uitnodigen</h1>
 </div>
 
 <!-- Invite Link -->
@@ -19,26 +19,26 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
         </svg>
-        <span id="copy-link-text">Copy invite link</span>
+        <span id="copy-link-text">Uitnodigingslink kopiëren</span>
     </button>
 </div>
 
 {% if is_admin %}
 <!-- Search Connections to Invite -->
-<h2 class="text-sm font-semibold text-gray-700 mb-3">Invite Connections</h2>
+<h2 class="text-sm font-semibold text-gray-700 mb-3">Connecties Uitnodigen</h2>
 <div class="mb-6">
     <div class="relative mb-2">
         <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
         </svg>
-        <input type="text" id="invite-search" placeholder="Search connections..."
+        <input type="text" id="invite-search" placeholder="Zoek connecties..."
                class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 bg-white text-sm focus:outline-none focus:border-maroon-300">
     </div>
     <div id="invite-results"></div>
 </div>
 
 <!-- Pending Join Requests -->
-<h2 class="text-sm font-semibold text-gray-700 mb-3">Join Requests ({{ pending_requests|length }})</h2>
+<h2 class="text-sm font-semibold text-gray-700 mb-3">Deelnameverzoeken ({{ pending_requests|length }})</h2>
 {% if pending_requests %}
 <div class="space-y-2">
     {% for req in pending_requests %}
@@ -60,18 +60,18 @@
         <div class="flex items-center gap-2 flex-shrink-0">
             <form method="POST" action="{{ url_for('groups.approve_request', id=group.id, request_id=req.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button class="text-xs bg-maroon text-white px-3 py-1.5 rounded-full font-medium">Accept</button>
+                <button class="text-xs bg-maroon text-white px-3 py-1.5 rounded-full font-medium">Accepteren</button>
             </form>
             <form method="POST" action="{{ url_for('groups.reject_request', id=group.id, request_id=req.id) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <button class="text-xs text-red-400 hover:text-red-600 font-medium">Reject</button>
+                <button class="text-xs text-red-400 hover:text-red-600 font-medium">Afwijzen</button>
             </form>
         </div>
     </div>
     {% endfor %}
 </div>
 {% else %}
-<p class="text-center text-sm text-gray-400 py-6">No pending requests</p>
+<p class="text-center text-sm text-gray-400 py-6">Geen openstaande verzoeken</p>
 {% endif %}
 {% endif %}
 {% endblock %}
@@ -86,8 +86,8 @@
 
     copyBtn.addEventListener('click', function() {
         navigator.clipboard.writeText(inviteUrl);
-        copyText.textContent = 'Copied!';
-        setTimeout(function() { copyText.textContent = 'Copy invite link'; }, 1500);
+        copyText.textContent = 'Gekopieerd!';
+        setTimeout(function() { copyText.textContent = 'Uitnodigingslink kopiëren'; }, 1500);
     });
 
     // Invite search (admin only)
@@ -110,7 +110,7 @@
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 if (!data.users.length) {
-                    results.innerHTML = '<p class="text-xs text-gray-400 py-2 text-center">No connections found</p>';
+                    results.innerHTML = '<p class="text-xs text-gray-400 py-2 text-center">Geen connecties gevonden</p>';
                     return;
                 }
                 var html = '';
@@ -128,7 +128,7 @@
                         + '<p class="font-semibold text-sm truncate">' + esc(u.display_name) + '</p>'
                         + '<p class="text-xs text-gray-400">@' + esc(u.username) + '</p>'
                         + '</div>'
-                        + '<button class="invite-btn text-xs bg-maroon text-white px-3 py-1.5 rounded-full font-medium flex-shrink-0" data-user-id="' + u.id + '">Invite</button>'
+                        + '<button class="invite-btn text-xs bg-maroon text-white px-3 py-1.5 rounded-full font-medium flex-shrink-0" data-user-id="' + u.id + '">Uitnodigen</button>'
                         + '</div>';
                 });
                 results.innerHTML = html;
@@ -145,14 +145,14 @@
 
         ajaxPost('/api/groups/' + groupId + '/invite/' + userId).then(function(data) {
             if (data.success) {
-                btn.outerHTML = '<span class="text-xs text-gray-400 font-medium flex-shrink-0">Added</span>';
+                btn.outerHTML = '<span class="text-xs text-gray-400 font-medium flex-shrink-0">Toegevoegd</span>';
             } else {
                 btn.disabled = false;
-                btn.textContent = 'Invite';
+                btn.textContent = 'Uitnodigen';
             }
         }).catch(function() {
             btn.disabled = false;
-            btn.textContent = 'Invite';
+            btn.textContent = 'Uitnodigen';
         });
     });
 

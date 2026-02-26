@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
             navigator.clipboard.writeText(url).then(function() {
                 // Show brief toast
                 var toast = document.createElement('div');
-                toast.textContent = 'Link copied!';
+                toast.textContent = 'Link gekopieerd!';
                 toast.className = 'fixed top-4 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-sm px-4 py-2 rounded-xl shadow-lg z-[70]';
                 document.body.appendChild(toast);
                 setTimeout(function() { toast.remove(); }, 2000);
@@ -141,7 +141,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else {
                         hasMore = false;
                     }
-                    sentinel.innerHTML = hasMore ? '' : '<p class="text-gray-400 text-sm">No more posts</p>';
+                    sentinel.innerHTML = hasMore ? '' : '<p class="text-gray-400 text-sm">Geen berichten meer</p>';
                     loading = false;
                 });
             }

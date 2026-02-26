@@ -47,17 +47,22 @@ def get_feed_posts(user, page=1, per_page=20):
         GroupMember.user_id == user.id
     )
 
-    # Posts from connections; photo visibility handled in template
-    from_connections = BeerPost.query.filter(
-        BeerPost.user_id.in_(connected_ids)
+    # Collect deduplicated post IDs first (avoids UNION + joinedload duplication)
+    conn_post_ids = db.session.query(BeerPost.id).filter(
+        BeerPost.user_id.in_(connected_ids),
+        BeerPost.user_id != user.id,
     )
 
-    from_groups = BeerPost.query.join(BeerPostGroup).filter(
-        BeerPostGroup.group_id.in_(my_group_ids)
+    group_post_ids = db.session.query(BeerPost.id).join(BeerPostGroup).filter(
+        BeerPostGroup.group_id.in_(my_group_ids),
+        BeerPost.user_id != user.id,
     )
 
-    combined = from_connections.union(from_groups).filter(
-        BeerPost.user_id != user.id
+    all_ids = conn_post_ids.union(group_post_ids)
+
+    # Fetch posts cleanly with eager loading — no UNION in the ORM query
+    combined = BeerPost.query.filter(
+        BeerPost.id.in_(all_ids)
     ).options(
         joinedload(BeerPost.author),
         joinedload(BeerPost.session).subqueryload(DrinkingSession.beers),

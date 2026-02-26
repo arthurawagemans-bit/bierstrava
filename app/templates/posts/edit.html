@@ -9,7 +9,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
         </svg>
     </a>
-    <h1 class="text-lg font-bold">Edit Post</h1>
+    <h1 class="text-lg font-bold">Bericht Bewerken</h1>
 </div>
 
 <form method="POST" enctype="multipart/form-data">
@@ -18,21 +18,21 @@
     <!-- Time -->
     {% if post.is_vdl %}
     <div class="mb-5">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Time</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Tijd</label>
         <div class="bg-amber-50 rounded-xl border border-amber-200 p-3 text-center">
             <span class="text-amber-700 font-bold text-xl">VDL</span>
         </div>
     </div>
     {% elif post.session_id %}
     <div class="mb-5">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Time</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Tijd</label>
         <div class="bg-gray-50 rounded-xl border border-gray-200 p-3 text-center">
-            <span class="text-gray-500 text-sm">Session post — times cannot be edited</span>
+            <span class="text-gray-500 text-sm">Sessie bericht — tijden kunnen niet worden bewerkt</span>
         </div>
     </div>
     {% else %}
     <div class="mb-5">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Time</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Tijd</label>
         <div class="bg-white rounded-xl border border-gray-200 p-3">
             <div class="flex items-center gap-2">
                 {{ form.drink_time_seconds(class="w-full text-center text-2xl font-bold text-maroon bg-transparent border-0 focus:ring-0 focus:outline-none font-mono", step="0.001", min="0.001", inputmode="decimal", type="number") }}
@@ -47,7 +47,7 @@
 
     <!-- Photo -->
     <div class="mb-5">
-        <label class="block text-sm font-medium text-gray-700 mb-2">Photo</label>
+        <label class="block text-sm font-medium text-gray-700 mb-2">Foto</label>
         {% if post.photo_filename %}
         <div class="rounded-2xl overflow-hidden mb-2 relative">
             <img src="{{ upload_url(post.photo_filename) }}"
@@ -57,7 +57,7 @@
             <input type="checkbox" name="remove_photo" value="y"
                    class="w-4 h-4 rounded border-gray-300 text-red-500 focus:ring-red-500"
                    id="remove-photo-cb">
-            <span class="text-sm text-red-500">Remove photo</span>
+            <span class="text-sm text-red-500">Foto verwijderen</span>
         </label>
         {% endif %}
         <div id="photo-area" class="photo-preview-area rounded-2xl overflow-hidden cursor-pointer relative"
@@ -69,7 +69,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                           d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
                 </svg>
-                <p class="text-sm text-gray-400">{{ 'Replace photo' if post.photo_filename else 'Tap to add a photo' }}</p>
+                <p class="text-sm text-gray-400">{{ 'Foto vervangen' if post.photo_filename else 'Tik om een foto toe te voegen' }}</p>
             </div>
             <img id="photo-preview" src="" alt="Preview" class="w-full aspect-[4/3] object-cover hidden">
         </div>
@@ -81,8 +81,8 @@
 
     <!-- Caption -->
     <div class="mb-5">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Caption</label>
-        {{ form.caption(class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm resize-none", rows="2", placeholder="How was it? @ to tag people, groups or more", **{"data-mentions": ""}) }}
+        <label class="block text-sm font-medium text-gray-700 mb-1">Bijschrift</label>
+        {{ form.caption(class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm resize-none", rows="2", placeholder="Hoe was het? @ om mensen, groepen of meer te taggen", **{"data-mentions": ""}) }}
         {% for error in form.caption.errors %}
         <p class="text-red-500 text-xs mt-1">{{ error }}</p>
         {% endfor %}
@@ -90,14 +90,14 @@
 
     <!-- Share photo with -->
     <div class="mb-5">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Share photo with</label>
-        <p class="text-xs text-gray-400 mb-2">Time and caption are always visible to connections</p>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Deel foto met</label>
+        <p class="text-xs text-gray-400 mb-2">Tijd en bijschrift zijn altijd zichtbaar voor connecties</p>
         <div class="space-y-2">
             <label class="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-gray-100 cursor-pointer">
                 <input type="checkbox" name="is_public" id="public-toggle" value="y"
                        class="w-4 h-4 rounded border-gray-300 text-maroon focus:ring-maroon"
                        {{ 'checked' if post.is_public }}>
-                <span class="text-sm text-gray-700">Your connections</span>
+                <span class="text-sm text-gray-700">Je connecties</span>
             </label>
             {% for value, label in form.groups.choices %}
             <label class="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-gray-100 cursor-pointer">
@@ -113,7 +113,7 @@
     <!-- Submit -->
     <button type="submit"
             class="w-full bg-maroon text-white py-3.5 rounded-xl font-semibold hover:bg-maroon-700 transition-colors shadow-md text-base mb-4">
-        Save Changes
+        Opslaan
     </button>
 </form>
 {% endblock %}

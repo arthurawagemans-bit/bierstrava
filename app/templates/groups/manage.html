@@ -8,10 +8,10 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
         </svg>
     </a>
-    <h1 class="text-lg font-bold">Manage Members</h1>
+    <h1 class="text-lg font-bold">Leden Beheren</h1>
 </div>
 
-<h2 class="text-sm font-semibold text-gray-700 mb-3">Members ({{ members|length }})</h2>
+<h2 class="text-sm font-semibold text-gray-700 mb-3">Leden ({{ members|length }})</h2>
 
 <div class="space-y-2">
     {% for m in members %}
@@ -30,15 +30,15 @@
             <p class="font-semibold text-sm truncate">{{ m.user.display_name }}</p>
             <p class="text-xs text-gray-400">@{{ m.user.username }}
                 {% if m.role == 'admin' %}
-                <span class="ml-1 text-maroon font-medium">Admin</span>
+                <span class="ml-1 text-maroon font-medium">Beheerder</span>
                 {% endif %}
             </p>
         </div>
         {% if m.user.id != current_user.id %}
         <form method="POST" action="{{ url_for('groups.remove_member', id=group.id, user_id=m.user.id) }}"
-              onsubmit="return confirm('Remove this member?')">
+              onsubmit="return confirm('Dit lid verwijderen?')">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button class="text-red-400 hover:text-red-600 text-xs font-medium">Remove</button>
+            <button class="text-red-400 hover:text-red-600 text-xs font-medium">Verwijderen</button>
         </form>
         {% endif %}
     </div>
@@ -48,10 +48,10 @@
 <!-- Delete Group -->
 <div class="mt-8 pt-6 border-t border-gray-200">
     <form method="POST" action="{{ url_for('groups.delete', id=group.id) }}"
-          onsubmit="return confirm('Delete this group permanently? This cannot be undone.')">
+          onsubmit="return confirm('Deze groep permanent verwijderen? Dit kan niet ongedaan worden.')">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button class="w-full bg-red-50 text-red-600 py-3 rounded-xl text-sm font-medium hover:bg-red-100 transition-colors">
-            Delete Group
+            Groep Verwijderen
         </button>
     </form>
 </div>

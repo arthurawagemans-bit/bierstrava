@@ -19,14 +19,14 @@
     {% if show_connect and current_user.id != user.id %}
     {% set status = current_user.connection_status(user) %}
     {% if status == 'accepted' %}
-    <span class="text-xs text-gray-400 font-medium">Connected</span>
+    <span class="text-xs text-gray-400 font-medium">Verbonden</span>
     {% elif status == 'pending' %}
-    <span class="text-xs text-maroon-300 font-medium">Pending</span>
+    <span class="text-xs text-maroon-300 font-medium">Aangevraagd</span>
     {% else %}
     <form method="POST" action="{{ url_for('profiles.connect', username=user.username) }}">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button class="text-xs bg-maroon text-white px-4 py-1.5 rounded-full font-medium hover:bg-maroon-700 transition-colors">
-            Connect
+            Verbinden
         </button>
     </form>
     {% endif %}

@@ -27,7 +27,7 @@ def update_privacy():
         current_user.is_private = form.is_private.data
         current_user.countdown_enabled = form.countdown_enabled.data
         db.session.commit()
-        flash('Settings updated!', 'success')
+        flash('Instellingen opgeslagen!', 'success')
     return redirect(url_for('settings.index'))
 
 
@@ -37,10 +37,10 @@ def change_password():
     form = ChangePasswordForm()
     if form.validate_on_submit():
         if not current_user.check_password(form.current_password.data):
-            flash('Current password is incorrect.', 'error')
+            flash('Huidig wachtwoord is onjuist.', 'error')
             return redirect(url_for('settings.index'))
 
         current_user.set_password(form.new_password.data)
         db.session.commit()
-        flash('Password changed!', 'success')
+        flash('Wachtwoord gewijzigd!', 'success')
     return redirect(url_for('settings.index'))

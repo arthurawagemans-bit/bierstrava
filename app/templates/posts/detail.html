@@ -9,7 +9,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
         </svg>
     </a>
-    <h1 class="text-lg font-bold flex-1">Post</h1>
+    <h1 class="text-lg font-bold flex-1">Bericht</h1>
     {% if post.user_id == current_user.id %}
     <div class="flex items-center gap-1">
         <a href="{{ url_for('posts.edit', id=post.id) }}" class="text-gray-400 hover:text-gray-600 p-1">
@@ -19,7 +19,7 @@
             </svg>
         </a>
         <form method="POST" action="{{ url_for('posts.delete', id=post.id) }}"
-              onsubmit="return confirm('Delete this post?')">
+              onsubmit="return confirm('Dit bericht verwijderen?')">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="text-red-400 hover:text-red-600 p-1">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -65,7 +65,7 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
         </svg>
-        <p class="text-sm text-gray-400">Photo was removed</p>
+        <p class="text-sm text-gray-400">Foto is verwijderd</p>
     </div>
     {% endif %}
 
@@ -78,7 +78,7 @@
                 <div class="flex items-center gap-1.5 flex-1 min-w-0">
                     <span class="text-sm font-medium text-gray-700 flex-shrink-0">{{ beer.label or 'Bier' }}</span>
                     {% if beer.pb_rank == 1 %}
-                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 flex-shrink-0">PB!</span>
+                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 flex-shrink-0">PR!</span>
                     {% elif beer.pb_rank == 2 %}
                     <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-600 flex-shrink-0">2nd</span>
                     {% elif beer.pb_rank == 3 %}
@@ -99,8 +99,8 @@
             </div>
             {% endfor %}
             <div class="flex items-center justify-between pt-2 border-t border-gray-200">
-                <span class="text-sm font-semibold text-gray-500">Session total</span>
-                <span class="text-sm font-bold text-maroon">{{ post.session.beer_count() }} bier{{ 's' if post.session.beer_count() != 1 }}</span>
+                <span class="text-sm font-semibold text-gray-500">Sessie totaal</span>
+                <span class="text-sm font-bold text-maroon">{{ post.session.beer_count() }} {{ 'bieren' if post.session.beer_count() != 1 else 'bier' }}</span>
             </div>
         </div>
         {% elif post.is_vdl %}
@@ -123,15 +123,15 @@
     {% for beer in post.session.beers %}
     {% if beer.pb_rank == 1 %}
     <div class="px-4 py-2.5 bg-green-50 border-t border-green-100">
-        <p class="text-sm font-bold text-green-700 text-center">NEW PB!! Fastest {{ beer.label or 'Bier' }} ever!!</p>
+        <p class="text-sm font-bold text-green-700 text-center">NIEUW PR!! Snelste {{ beer.label or 'Bier' }} ooit!!</p>
     </div>
     {% elif beer.pb_rank == 2 %}
     <div class="px-4 py-2.5 bg-blue-50 border-t border-blue-100">
-        <p class="text-sm font-bold text-blue-600 text-center">YAY!! 2nd fastest {{ beer.label or 'Bier' }} so far!!</p>
+        <p class="text-sm font-bold text-blue-600 text-center">YAY!! 2e snelste {{ beer.label or 'Bier' }} tot nu toe!!</p>
     </div>
     {% elif beer.pb_rank == 3 %}
     <div class="px-4 py-2.5 bg-orange-50 border-t border-orange-100">
-        <p class="text-sm font-bold text-orange-500 text-center">NICE!! 3rd fastest {{ beer.label or 'Bier' }} so far!!</p>
+        <p class="text-sm font-bold text-orange-500 text-center">NICE!! 3e snelste {{ beer.label or 'Bier' }} tot nu toe!!</p>
     </div>
     {% endif %}
     {% endfor %}
@@ -158,7 +158,7 @@
 <!-- Comments Section -->
 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
     <h3 class="px-4 py-3 font-semibold text-sm border-b border-gray-100">
-        Comments ({{ post.comment_count() }})
+        Reacties ({{ post.comment_count() }})
     </h3>
 
     <div id="comments-list">
@@ -188,7 +188,7 @@
         </div>
         {% endfor %}
         {% else %}
-        <p class="px-4 py-6 text-center text-sm text-gray-400">No comments yet. Be the first!</p>
+        <p class="px-4 py-6 text-center text-sm text-gray-400">Nog geen reacties. Wees de eerste!</p>
         {% endif %}
     </div>
 
@@ -196,12 +196,12 @@
     <form method="POST" action="{{ url_for('posts.add_comment', id=post.id) }}"
           class="flex items-center gap-2 px-4 py-3 border-t border-gray-100">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <input type="text" name="body" placeholder="Add a comment..."
+        <input type="text" name="body" placeholder="Plaats een reactie..."
                required maxlength="500"
                class="flex-1 text-sm bg-gray-50 px-4 py-2.5 rounded-full border-0 focus:ring-0 focus:outline-none focus:bg-gray-100">
         <button type="submit"
                 class="text-maroon font-semibold text-sm px-2 hover:text-maroon-700">
-            Post
+            Plaatsen
         </button>
     </form>
 </div>

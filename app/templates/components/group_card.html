@@ -20,7 +20,7 @@
         </div>
         <div class="flex-1 min-w-0">
             <p class="font-semibold text-sm text-gray-900 truncate">{{ group.name }}</p>
-            <p class="text-xs text-gray-400">{{ group.member_count() }} member{{ 's' if group.member_count() != 1 }}</p>
+            <p class="text-xs text-gray-400">{{ group.member_count() }} {{ 'leden' if group.member_count() != 1 else 'lid' }}</p>
         </div>
         <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>

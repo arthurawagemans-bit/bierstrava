@@ -50,7 +50,7 @@ def toggle_reaction(id):
     data = request.get_json()
     emoji = data.get('emoji', '') if data else ''
     if emoji not in ALLOWED_REACTIONS:
-        return jsonify(success=False, error='Invalid reaction'), 400
+        return jsonify(success=False, error='Ongeldige reactie'), 400
 
     existing = Reaction.query.filter_by(
         user_id=current_user.id, post_id=post.id, emoji=emoji
@@ -83,7 +83,7 @@ def add_comment(id):
     data = request.get_json()
     body = data.get('body', '').strip() if data else ''
     if not body or len(body) > 500:
-        return jsonify(success=False, error='Invalid comment.'), 400
+        return jsonify(success=False, error='Ongeldige reactie.'), 400
 
     comment = Comment(user_id=current_user.id, post_id=post.id, body=body)
     db.session.add(comment)
@@ -252,7 +252,7 @@ def search():
 def api_connect(username):
     user = User.query.filter_by(username=username).first_or_404()
     if user.id == current_user.id:
-        return jsonify(success=False, error='Cannot connect with yourself'), 400
+        return jsonify(success=False, error='Kan niet met jezelf verbinden'), 400
 
     existing = Connection.query.filter_by(
         follower_id=current_user.id, followed_id=user.id
@@ -370,7 +370,7 @@ def invite_to_group(id, user_id):
 
     # Must be a connection of current user
     if not current_user.is_accepted_connection_of(user):
-        return jsonify(success=False, error='Not a connection'), 400
+        return jsonify(success=False, error='Geen connectie'), 400
 
     if group.is_member(user):
         return jsonify(success=True, status='already_member')

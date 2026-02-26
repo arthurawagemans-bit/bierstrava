@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // People
         if (data.users && data.users.length) {
-            html += '<div class="mention-category">People</div>';
+            html += '<div class="mention-category">Mensen</div>';
             data.users.forEach(function(u) {
                 var avatar;
                 if (u.avatar) {
@@ -109,14 +109,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Groups
         if (data.groups && data.groups.length) {
-            html += '<div class="mention-category">Groups</div>';
+            html += '<div class="mention-category">Groepen</div>';
             data.groups.forEach(function(g) {
                 items.push({ value: g.name.replace(/\s+/g, '_'), display: g.name });
                 html += '<div class="mention-item" data-index="' + (items.length - 1) + '">'
                     + '<div class="mention-icon-circle"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div>'
                     + '<div class="mention-item-text">'
                     + '<span class="mention-item-name">' + esc(g.name) + '</span>'
-                    + '<span class="mention-item-sub">' + g.member_count + ' members</span>'
+                    + '<span class="mention-item-sub">' + g.member_count + ' leden</span>'
                     + '</div></div>';
             });
         }

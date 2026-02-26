@@ -19,7 +19,7 @@
         <div id="stopwatch-display" class="text-8xl font-bold text-maroon font-mono tracking-wide transition-colors duration-300">
             0.000
         </div>
-        <p id="timer-seconds-label" class="text-sm text-gray-400 mt-2">seconds</p>
+        <p id="timer-seconds-label" class="text-sm text-gray-400 mt-2">seconden</p>
         {% if personal_best %}
         <p id="pb-indicator" class="text-xs text-gray-400 mt-4">
             PB: <span class="font-bold text-maroon font-mono">{{ personal_best|format_time }}</span>
@@ -49,8 +49,8 @@
         <!-- Session header -->
         <div class="bg-white rounded-2xl border border-gray-100 p-4 mb-5">
             <div class="flex items-center justify-between mb-3">
-                <h2 class="text-lg font-bold text-gray-900">Session</h2>
-                <span id="session-beer-count" class="text-sm text-gray-400">0 biers</span>
+                <h2 class="text-lg font-bold text-gray-900">Sessie</h2>
+                <span id="session-beer-count" class="text-sm text-gray-400">0 bieren</span>
             </div>
             <div id="session-beer-list">
                 <!-- Filled by JS -->
@@ -62,7 +62,7 @@
             <div id="session-add-btns" class="flex gap-3 mb-3">
                 <button type="button" id="session-timer-btn"
                         class="flex-1 bg-maroon text-white py-3 rounded-xl font-semibold text-sm">
-                    Bier (timed)
+                    Bier (getimed)
                 </button>
                 <button type="button" id="session-add-vdl-btn"
                         class="flex-1 bg-amber-100 text-amber-700 py-3 rounded-xl font-semibold text-sm">
@@ -137,7 +137,7 @@
 
         <!-- Photo Upload -->
         <div class="mb-5">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Photo</label>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Foto</label>
             <div class="photo-preview-area rounded-2xl overflow-hidden cursor-pointer relative"
                  onclick="document.getElementById('session-photo-input').click()">
                 <div id="session-photo-placeholder" class="flex flex-col items-center justify-center py-10">
@@ -147,7 +147,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
                     </svg>
-                    <p class="text-sm text-gray-400">Tap to add a photo</p>
+                    <p class="text-sm text-gray-400">Tik om een foto toe te voegen</p>
                 </div>
                 <img id="session-photo-preview" src="" alt="Preview" class="w-full aspect-[4/3] object-cover hidden">
             </div>
@@ -156,21 +156,21 @@
 
         <!-- Caption -->
         <div class="mb-5">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Caption</label>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Bijschrift</label>
             <textarea name="caption" data-mentions class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm resize-none"
-                      rows="2" placeholder="How was the session? @ to tag people, groups or more" maxlength="500"></textarea>
+                      rows="2" placeholder="Hoe was de sessie? @ om mensen, groepen of meer te taggen" maxlength="500"></textarea>
         </div>
 
         <!-- Share photo with -->
         <div class="mb-5">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Share photo with</label>
-            <p class="text-xs text-gray-400 mb-2">Time and caption are always visible to connections</p>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Deel foto met</label>
+            <p class="text-xs text-gray-400 mb-2">Tijd en bijschrift zijn altijd zichtbaar voor connecties</p>
             <div class="space-y-2">
                 <label class="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-gray-100 cursor-pointer">
                     <input type="checkbox" name="is_public" value="y"
                            class="w-4 h-4 rounded border-gray-300 text-maroon focus:ring-maroon"
                            {{ 'checked' if last_public }}>
-                    <span class="text-sm text-gray-700">Your connections</span>
+                    <span class="text-sm text-gray-700">Je connecties</span>
                 </label>
                 {% for value, label in form.groups.choices %}
                 <label class="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-gray-100 cursor-pointer">
@@ -186,7 +186,7 @@
         <!-- Preview button (replaces direct submit) -->
         <button type="button" id="preview-session-btn"
                 class="w-full bg-maroon text-white py-3.5 rounded-xl font-semibold hover:bg-maroon-700 transition-colors shadow-md text-base mb-4">
-            Preview Post
+            Voorbeeld
         </button>
     </div>
 
@@ -200,7 +200,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                 </svg>
             </button>
-            <h2 class="text-lg font-bold flex-1">Preview</h2>
+            <h2 class="text-lg font-bold flex-1">Voorbeeld</h2>
         </div>
 
         <!-- Post card preview -->
@@ -219,7 +219,7 @@
                 </div>
                 <div class="ml-3 flex-1 min-w-0">
                     <span class="font-semibold text-sm text-gray-900 block">{{ current_user.display_name }}</span>
-                    <p class="text-xs text-gray-400">Just now</p>
+                    <p class="text-xs text-gray-400">Zojuist</p>
                 </div>
             </div>
 
@@ -257,7 +257,7 @@
 
         <!-- Sharing info -->
         <div id="preview-sharing" class="bg-white rounded-xl border border-gray-100 px-4 py-3 mb-5">
-            <p class="text-xs text-gray-400 mb-1">Sharing with</p>
+            <p class="text-xs text-gray-400 mb-1">Gedeeld met</p>
             <p id="preview-share-list" class="text-sm text-gray-600"></p>
         </div>
 
@@ -265,11 +265,11 @@
         <div class="flex gap-3 mb-4">
             <button type="button" id="preview-edit-btn"
                     class="flex-1 bg-gray-100 text-gray-700 py-3.5 rounded-xl font-semibold text-base">
-                Edit
+                Bewerken
             </button>
             <button type="submit"
                     class="flex-1 bg-maroon text-white py-3.5 rounded-xl font-semibold text-base shadow-md">
-                Post
+                Posten
             </button>
         </div>
     </div>

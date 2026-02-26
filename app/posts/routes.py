@@ -162,7 +162,7 @@ def create():
 
         # Must have either a time or be VDL
         if not is_vdl and not drink_time:
-            flash('Please time your bier or mark it as VDL.', 'error')
+            flash('Time je bier of markeer het als VDL.', 'error')
             return redirect(url_for('posts.create'))
 
         beer_count = form.beer_count.data or 1
@@ -189,7 +189,7 @@ def create():
 
         extract_and_save_tags(form.caption.data)
         db.session.commit()
-        flash('Bier posted!', 'success')
+        flash('Bier gepost!', 'success')
         return redirect(url_for('posts.detail', id=post.id))
 
     personal_best = db.session.query(
@@ -246,11 +246,11 @@ def create_session():
         try:
             beers_data = json.loads(form.session_beers_json.data)
         except (json.JSONDecodeError, TypeError):
-            flash('Invalid session data.', 'error')
+            flash('Ongeldige sessiedata.', 'error')
             return redirect(url_for('posts.create'))
 
         if not beers_data or len(beers_data) < 1:
-            flash('A session needs at least 1 bier.', 'error')
+            flash('Een sessie heeft minstens 1 bier nodig.', 'error')
             return redirect(url_for('posts.create'))
 
         # Create the session
@@ -359,22 +359,22 @@ def create_session():
         for sb in session_obj.beers:
             label_name = sb.label or 'Bier'
             if sb.pb_rank == 1 and sb.drink_time_seconds is not None:
-                flash(f'NEW PB! Your {label_name} time of {sb.drink_time_seconds:.3f}s is your fastest ever!', 'success')
+                flash(f'NIEUW PR! Je {label_name} tijd van {sb.drink_time_seconds:.3f}s is je snelste ooit!', 'success')
                 has_pb = True
             elif sb.pb_rank == 2 and sb.drink_time_seconds is not None:
-                flash(f'2nd fastest {label_name} ever! {sb.drink_time_seconds:.3f}s', 'success')
+                flash(f'2e snelste {label_name} ooit! {sb.drink_time_seconds:.3f}s', 'success')
                 has_pb = True
             elif sb.pb_rank == 3 and sb.drink_time_seconds is not None:
-                flash(f'3rd fastest {label_name} ever! {sb.drink_time_seconds:.3f}s', 'success')
+                flash(f'3e snelste {label_name} ooit! {sb.drink_time_seconds:.3f}s', 'success')
                 has_pb = True
 
         if not has_pb:
-            flash('Session posted!', 'success')
+            flash('Sessie gepost!', 'success')
 
         # Check achievements
         new_achievements = check_achievements(current_user)
         for ach in new_achievements:
-            flash(f'{ach.icon} Achievement unlocked: {ach.name}!', 'success')
+            flash(f'{ach.icon} Prestatie ontgrendeld: {ach.name}!', 'success')
 
         return redirect(url_for('posts.detail', id=post.id))
 
@@ -410,7 +410,7 @@ def add_comment(id):
         )
         db.session.add(comment)
         db.session.commit()
-        flash('Comment added!', 'success')
+        flash('Reactie geplaatst!', 'success')
 
     return redirect(url_for('posts.detail', id=post.id))
 
@@ -456,7 +456,7 @@ def edit(id):
 
         extract_and_save_tags(form.caption.data)
         db.session.commit()
-        flash('Post updated!', 'success')
+        flash('Bericht bijgewerkt!', 'success')
         return redirect(url_for('posts.detail', id=post.id))
 
     # Pre-select current groups on GET
@@ -482,5 +482,5 @@ def delete(id):
 
     db.session.delete(post)
     db.session.commit()
-    flash('Post deleted.', 'success')
+    flash('Bericht verwijderd.', 'success')
     return redirect(url_for('main.feed'))

@@ -61,7 +61,7 @@ def create():
         db.session.add(member)
         db.session.commit()
 
-        flash(f'Group "{group.name}" created!', 'success')
+        flash(f'Groep "{group.name}" aangemaakt!', 'success')
         return redirect(url_for('groups.detail', id=group.id))
 
     return render_template('groups/create.html', form=form)
@@ -210,7 +210,7 @@ def join(invite_code):
     group = Group.query.filter_by(invite_code=invite_code).first_or_404()
 
     if group.is_member(current_user):
-        flash('You are already a member of this group.', 'info')
+        flash('Je bent al lid van deze groep.', 'info')
         return redirect(url_for('groups.detail', id=group.id))
 
     if request.method == 'POST':
@@ -221,7 +221,7 @@ def join(invite_code):
         )
         db.session.add(member)
         db.session.commit()
-        flash(f'You joined "{group.name}"!', 'success')
+        flash(f'Je bent lid geworden van "{group.name}"!', 'success')
         return redirect(url_for('groups.detail', id=group.id))
 
     return render_template('groups/join.html', group=group)
@@ -240,7 +240,7 @@ def leave(id):
 
     db.session.delete(membership)
     db.session.commit()
-    flash(f'You left "{group.name}".', 'success')
+    flash(f'Je hebt "{group.name}" verlaten.', 'success')
     return redirect(url_for('groups.list_groups'))
 
 
@@ -289,7 +289,7 @@ def remove_member(id, user_id):
 
     db.session.delete(membership)
     db.session.commit()
-    flash('Member removed.', 'success')
+    flash('Lid verwijderd.', 'success')
     return redirect(url_for('groups.manage', id=group.id))
 
 
@@ -311,7 +311,7 @@ def edit(id):
                 max_size=(400, 400)
             )
         db.session.commit()
-        flash('Group updated!', 'success')
+        flash('Groep bijgewerkt!', 'success')
         return redirect(url_for('groups.detail', id=group.id))
 
     return render_template('groups/edit.html', form=form, group=group)
@@ -332,7 +332,7 @@ def approve_request(id, request_id):
     member = GroupMember(user_id=join_req.user_id, group_id=group.id, role='member')
     db.session.add(member)
     db.session.commit()
-    flash(f'{join_req.user.display_name} has been added to the group.', 'success')
+    flash(f'{join_req.user.display_name} is toegevoegd aan de groep.', 'success')
     return redirect(url_for('groups.invite', id=group.id))
 
 
@@ -349,7 +349,7 @@ def reject_request(id, request_id):
 
     join_req.status = 'rejected'
     db.session.commit()
-    flash('Request rejected.', 'success')
+    flash('Verzoek afgewezen.', 'success')
     return redirect(url_for('groups.invite', id=group.id))
 
 
@@ -362,5 +362,5 @@ def delete(id):
     name = group.name
     db.session.delete(group)
     db.session.commit()
-    flash(f'Group "{name}" deleted.', 'success')
+    flash(f'Groep "{name}" verwijderd.', 'success')
     return redirect(url_for('groups.list_groups'))
