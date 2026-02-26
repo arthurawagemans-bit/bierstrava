@@ -5,7 +5,7 @@ from collections import OrderedDict
 from . import bp
 from ..extensions import db
 from ..models import (User, Connection, BeerPost, SessionBeer, DrinkingSession,
-                      Like, Comment, Achievement, UserAchievement)
+                      Like, Comment, Achievement, UserAchievement, Competition)
 from .forms import EditProfileForm
 from ..posts.utils import process_upload
 from datetime import datetime, date as dt_date, timedelta
@@ -89,11 +89,12 @@ def view(username):
                     UserAchievement.query.filter_by(user_id=user.id).all()}
 
     # Group achievements by category prefix (e.g. 'bier', 'speed', etc.)
-    cat_order = ['bier', 'speed', 'social', 'streak', 'pb', 'challenge', 'weekly']
+    cat_order = ['bier', 'speed', 'social', 'streak', 'pb', 'challenge', 'weekly', 'comp_win']
     cat_labels = {
         'bier': 'Bieren', 'speed': 'Snelheid', 'social': 'Sociaal',
         'streak': 'Reeks', 'pb': 'Persoonlijke Records',
         'challenge': 'Challenges', 'weekly': 'Wekelijks',
+        'comp_win': 'Competities',
     }
     cat_map = OrderedDict((k, []) for k in cat_order)
     for a in all_achievements:
@@ -166,6 +167,10 @@ def view(username):
                     max_streak = streak
             max_streak = max(max_streak, 1)
         progress['streak'] = max_streak
+        # Competition wins
+        progress['comp_win'] = Competition.query.filter_by(
+            winner_id=user.id, status='completed'
+        ).count()
 
     # Build final categories list for template
     achievement_cats = []
@@ -193,6 +198,11 @@ def view(username):
             'progress': progress.get(key),
         })
 
+    # Won competitions (badge of honor)
+    won_competitions = Competition.query.filter_by(
+        winner_id=user.id, status='completed'
+    ).order_by(Competition.completed_at.desc()).all()
+
     return render_template('profiles/view.html',
                            profile_user=user,
                            can_view=can_view,
@@ -200,6 +210,7 @@ def view(username):
                            posts=posts,
                            category_stats=category_stats,
                            achievement_cats=achievement_cats,
+                           won_competitions=won_competitions,
                            active_nav='profile' if user.id == current_user.id else '')
 
 

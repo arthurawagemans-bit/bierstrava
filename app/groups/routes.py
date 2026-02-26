@@ -4,7 +4,7 @@ from flask import render_template, redirect, url_for, flash, abort, current_app,
 from flask_login import login_required, current_user
 from . import bp
 from ..extensions import db
-from ..models import Group, GroupMember, GroupJoinRequest, BeerPost, BeerPostGroup, User
+from ..models import Group, GroupMember, GroupJoinRequest, BeerPost, BeerPostGroup, User, Competition
 from .forms import CreateGroupForm, EditGroupForm
 from ..posts.utils import process_upload
 
@@ -193,6 +193,18 @@ def detail(id):
 
     pending_count = group.pending_request_count() if is_admin else 0
 
+    # Active competition for this group (if any)
+    active_competition = Competition.query.filter_by(
+        group_id=group.id, status='active'
+    ).order_by(Competition.created_at.desc()).first()
+
+    # Latest completed competition (shown when no active competition)
+    latest_completed_competition = None
+    if not active_competition:
+        latest_completed_competition = Competition.query.filter_by(
+            group_id=group.id, status='completed'
+        ).order_by(Competition.completed_at.desc()).first()
+
     return render_template('groups/detail.html',
                            group=group, posts=posts,
                            is_admin=is_admin,
@@ -201,7 +213,9 @@ def detail(id):
                            lb_month=lb_month,
                            lb_average=lb_average,
                            lb_week=lb_week,
-                           group_record=group_record)
+                           group_record=group_record,
+                           active_competition=active_competition,
+                           latest_completed_competition=latest_completed_competition)
 
 
 @bp.route('/join/<invite_code>', methods=['GET', 'POST'])

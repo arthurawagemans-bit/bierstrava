@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Competities - {{ group.name }} - VEAU{% endblock %}
+
+{% block content %}
+<div class="flex items-center gap-3 mb-6">
+    <a href="{{ url_for('groups.detail', id=group.id) }}" class="text-gray-500">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+    </a>
+    <h1 class="text-lg font-bold flex-1">Competities</h1>
+    <a href="{{ url_for('competitions.create', group_id=group.id) }}"
+       class="bg-maroon text-white text-sm font-semibold px-4 py-2 rounded-xl hover:bg-maroon-700 transition-colors">
+        + Nieuw
+    </a>
+</div>
+
+<!-- Active Competitions -->
+{% if active_competitions %}
+<h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Actief</h2>
+<div class="space-y-3 mb-6">
+    {% for comp in active_competitions %}
+    <a href="{{ url_for('competitions.detail', id=comp.id) }}"
+       class="block bg-white rounded-2xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow">
+        <div class="flex items-center gap-3">
+            <span class="text-2xl">🏆</span>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-bold text-gray-900 truncate">{{ comp.title }}</p>
+                <p class="text-[11px] text-gray-400">
+                    {{ comp.target_beers }} bieren · {{ comp.participant_count() }} deelnemers
+                </p>
+            </div>
+            {% set lead = comp.leader() %}
+            {% if lead and lead.beer_count > 0 %}
+            <div class="text-right">
+                <p class="text-xs font-bold text-maroon">{{ lead.beer_count }}/{{ comp.target_beers }}</p>
+                <p class="text-[10px] text-gray-400">{{ lead.user.display_name }}</p>
+            </div>
+            {% endif %}
+        </div>
+        {% if lead and lead.beer_count > 0 %}
+        <div class="mt-3 h-2 bg-gray-100 rounded-full overflow-hidden">
+            <div class="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full transition-all"
+                 style="width: {{ [(lead.beer_count / comp.target_beers * 100), 100] | min }}%"></div>
+        </div>
+        {% endif %}
+    </a>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Completed Competitions -->
+{% if completed_competitions %}
+<h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">Afgerond</h2>
+<div class="space-y-3 mb-6">
+    {% for comp in completed_competitions %}
+    <a href="{{ url_for('competitions.detail', id=comp.id) }}"
+       class="block bg-white rounded-2xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-shadow">
+        <div class="flex items-center gap-3">
+            <span class="text-2xl">🥇</span>
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-bold text-gray-900 truncate">{{ comp.title }}</p>
+                <p class="text-[11px] text-gray-400">
+                    {{ comp.target_beers }} bieren · Winnaar: <span class="font-medium text-amber-600">{{ comp.winner.display_name }}</span>
+                </p>
+            </div>
+            {% if comp.completed_at %}
+            <span class="text-[10px] text-gray-400">{{ comp.completed_at|timeago }}</span>
+            {% endif %}
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Empty state -->
+{% if not active_competitions and not completed_competitions %}
+<div class="text-center py-16">
+    <span class="text-4xl mb-4 block">🏆</span>
+    <p class="text-gray-400 text-sm mb-4">Nog geen competities in deze groep.</p>
+    <a href="{{ url_for('competitions.create', group_id=group.id) }}"
+       class="inline-block bg-maroon text-white text-sm font-semibold px-6 py-3 rounded-xl hover:bg-maroon-700 transition-colors">
+        Start een competitie
+    </a>
+</div>
+{% endif %}
+{% endblock %}

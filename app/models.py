@@ -421,3 +421,92 @@ class UserAchievement(db.Model):
     __table_args__ = (
         db.UniqueConstraint('user_id', 'achievement_slug', name='unique_user_achievement'),
     )
+
+
+# ---------------------------------------------------------------------------
+# Competition (Competitie)
+# ---------------------------------------------------------------------------
+
+class Competition(db.Model):
+    __tablename__ = 'competitions'
+
+    id = db.Column(db.Integer, primary_key=True)
+    group_id = db.Column(db.Integer, db.ForeignKey('groups.id'), nullable=False, index=True)
+    created_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    title = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.String(500), default='')
+    target_beers = db.Column(db.Integer, nullable=False)
+    status = db.Column(db.String(15), default='active')  # active, completed
+    winner_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    completed_at = db.Column(db.DateTime, nullable=True)
+
+    group = db.relationship('Group', backref=db.backref('competitions', lazy='dynamic'))
+    created_by = db.relationship('User', foreign_keys=[created_by_id],
+                                 backref=db.backref('created_competitions', lazy='dynamic'))
+    winner = db.relationship('User', foreign_keys=[winner_id],
+                             backref=db.backref('won_competitions', lazy='dynamic'))
+    participants = db.relationship('CompetitionParticipant', backref='competition',
+                                   lazy='dynamic', cascade='all, delete-orphan')
+
+    __table_args__ = (
+        db.Index('idx_competition_group_status', 'group_id', 'status'),
+    )
+
+    def participant_count(self):
+        return self.participants.count()
+
+    def is_participant(self, user):
+        return CompetitionParticipant.query.filter_by(
+            competition_id=self.id, user_id=user.id
+        ).first() is not None
+
+    def leader(self):
+        """Return the participant with the most beers."""
+        return self.participants.order_by(
+            CompetitionParticipant.beer_count.desc()
+        ).first()
+
+
+class CompetitionParticipant(db.Model):
+    __tablename__ = 'competition_participants'
+
+    id = db.Column(db.Integer, primary_key=True)
+    competition_id = db.Column(db.Integer, db.ForeignKey('competitions.id'),
+                               nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    beer_count = db.Column(db.Integer, default=0)
+    verified_count = db.Column(db.Integer, default=0)
+    joined_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('competition_participations', lazy='dynamic'))
+
+    __table_args__ = (
+        db.UniqueConstraint('competition_id', 'user_id', name='unique_comp_participant'),
+        db.Index('idx_comp_participant_comp_user', 'competition_id', 'user_id'),
+    )
+
+
+class CompetitionBeer(db.Model):
+    __tablename__ = 'competition_beers'
+
+    id = db.Column(db.Integer, primary_key=True)
+    competition_id = db.Column(db.Integer, db.ForeignKey('competitions.id'),
+                               nullable=False, index=True)
+    post_id = db.Column(db.Integer, db.ForeignKey('beer_posts.id'), nullable=False, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    beer_count = db.Column(db.Integer, default=1)
+    is_verified = db.Column(db.Boolean, default=False)
+    verified_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    verified_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    competition = db.relationship('Competition', backref=db.backref('beers', lazy='dynamic'))
+    post = db.relationship('BeerPost', backref=db.backref('competition_beers', lazy='select'))
+    user = db.relationship('User', foreign_keys=[user_id])
+    verified_by = db.relationship('User', foreign_keys=[verified_by_id])
+
+    __table_args__ = (
+        db.UniqueConstraint('competition_id', 'post_id', name='unique_comp_beer'),
+        db.Index('idx_comp_beer_comp_user', 'competition_id', 'user_id'),
+    )

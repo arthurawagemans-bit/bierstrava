@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Nieuwe Competitie - VEAU{% endblock %}
+
+{% block content %}
+<div class="flex items-center gap-3 mb-6">
+    <a href="{{ url_for('competitions.list_for_group', group_id=group.id) }}" class="text-gray-500">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+    </a>
+    <h1 class="text-lg font-bold">Nieuwe Competitie</h1>
+</div>
+
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6">
+    <div class="flex items-center gap-3">
+        {% if group.avatar_filename %}
+        <img src="{{ upload_url(group.avatar_filename) }}" class="w-8 h-8 rounded-lg object-cover">
+        {% else %}
+        <div class="w-8 h-8 rounded-lg bg-maroon-100 flex items-center justify-center">
+            <span class="text-maroon text-xs font-bold">{{ group.name[0]|upper }}</span>
+        </div>
+        {% endif %}
+        <p class="text-sm font-medium text-gray-700">{{ group.name }}</p>
+    </div>
+</div>
+
+<form method="POST" class="space-y-5">
+    {{ form.hidden_tag() }}
+
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Titel</label>
+        {{ form.title(class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm", placeholder="bijv. Race naar 20 bieren") }}
+        {% for error in form.title.errors %}
+        <p class="text-red-500 text-xs mt-1">{{ error }}</p>
+        {% endfor %}
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Beschrijving <span class="text-gray-400">(optioneel)</span></label>
+        {{ form.description(class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm resize-none", rows="3", placeholder="Regels of extra info over de competitie") }}
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Doel (aantal bieren)</label>
+        {{ form.target_beers(class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm", type="number", min="1", max="10000", placeholder="bijv. 20") }}
+        {% for error in form.target_beers.errors %}
+        <p class="text-red-500 text-xs mt-1">{{ error }}</p>
+        {% endfor %}
+        <p class="text-[11px] text-gray-400 mt-1">Eerste persoon die dit aantal bereikt wint!</p>
+    </div>
+
+    <button type="submit"
+            class="w-full bg-maroon text-white py-3 rounded-xl font-semibold hover:bg-maroon-700 transition-colors shadow-md">
+        Competitie Starten
+    </button>
+</form>
+{% endblock %}

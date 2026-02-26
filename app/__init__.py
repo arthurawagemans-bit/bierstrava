@@ -48,6 +48,7 @@ def create_app(config_class=Config):
     from .search import bp as search_bp
     from .settings import bp as settings_bp
     from .api import bp as api_bp
+    from .competitions import bp as competitions_bp
 
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(main_bp)
@@ -58,6 +59,7 @@ def create_app(config_class=Config):
     app.register_blueprint(search_bp, url_prefix='/search')
     app.register_blueprint(settings_bp, url_prefix='/settings')
     app.register_blueprint(api_bp, url_prefix='/api')
+    app.register_blueprint(competitions_bp, url_prefix='/competities')
 
     # ── Template filters ─────────────────────────────────
     from .template_filters import timeago, format_time, render_mentions
@@ -186,6 +188,10 @@ def create_app(config_class=Config):
             ('weekly_5', 'On Fire', '🔥', '5 posts in één week'),
             ('weekly_10', 'Vlammend', '🔥', '10 posts in één week'),
             ('weekly_20', 'Inferno', '🔥', '20 posts in één week'),
+            # Competition winner tiers
+            ('comp_win_1', 'Eerste Overwinning', '🏆', 'Win je eerste competitie'),
+            ('comp_win_3', 'Competitiebeest', '🏆', 'Win 3 competities'),
+            ('comp_win_10', 'Onverslaanbaar', '🏆', 'Win 10 competities'),
         ]
         new_slugs = {slug for slug, _, _, _ in _achievements}
         # Remove old non-tiered achievements

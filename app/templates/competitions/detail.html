@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% block title %}{{ comp.title }} - VEAU{% endblock %}
+
+{% block head %}
+<meta name="csrf-token" content="{{ csrf_token() }}">
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="flex items-center gap-3 mb-4">
+    <a href="{{ url_for('competitions.list_for_group', group_id=group.id) }}" class="text-gray-500">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+    </a>
+    <div class="flex-1 min-w-0">
+        <h1 class="text-lg font-bold truncate">{{ comp.title }}</h1>
+        <p class="text-[11px] text-gray-400">{{ group.name }}</p>
+    </div>
+    {% if comp.status == 'active' %}
+    <span class="bg-green-100 text-green-700 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase">Actief</span>
+    {% else %}
+    <span class="bg-amber-100 text-amber-700 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase">Afgerond</span>
+    {% endif %}
+</div>
+
+<!-- Winner Banner (completed competitions) -->
+{% if comp.status == 'completed' and comp.winner %}
+<div class="bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl text-white p-5 mb-4 text-center">
+    <span class="text-3xl block mb-1">🏆</span>
+    <p class="text-[10px] font-semibold text-white/70 uppercase tracking-wider mb-1">Winnaar</p>
+    <p class="text-xl font-bold">{{ comp.winner.display_name }}</p>
+    <p class="text-sm text-white/80 mt-1">{{ comp.target_beers }} bieren bereikt!</p>
+</div>
+{% endif %}
+
+<!-- Description -->
+{% if comp.description %}
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
+    <p class="text-sm text-gray-600">{{ comp.description }}</p>
+</div>
+{% endif %}
+
+<!-- Goal Progress -->
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
+    <div class="flex items-center justify-between mb-2">
+        <p class="text-sm font-semibold text-gray-700">Doel</p>
+        <p class="text-sm font-bold text-maroon">{{ comp.target_beers }} bieren</p>
+    </div>
+    <p class="text-[11px] text-gray-400">{{ comp.participant_count() }} deelnemers</p>
+</div>
+
+<!-- Join / Leave -->
+{% if comp.status == 'active' %}
+<div class="mb-4">
+    {% if not is_participant %}
+    <form method="POST" action="{{ url_for('competitions.join', id=comp.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit"
+                class="w-full bg-maroon text-white py-3 rounded-xl font-semibold hover:bg-maroon-700 transition-colors shadow-md">
+            Meedoen
+        </button>
+    </form>
+    {% else %}
+    <form method="POST" action="{{ url_for('competitions.leave', id=comp.id) }}"
+          onsubmit="return confirm('Weet je zeker dat je de competitie wilt verlaten?')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit"
+                class="w-full bg-gray-100 text-gray-500 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-colors text-sm">
+            Competitie verlaten
+        </button>
+    </form>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Leaderboard -->
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-4">
+    <div class="px-4 py-3 border-b border-gray-50">
+        <h2 class="text-sm font-semibold text-gray-700">Ranglijst</h2>
+    </div>
+    {% if participants %}
+    <div class="divide-y divide-gray-50">
+        {% for p in participants %}
+        <a href="{{ url_for('profiles.view', username=p.user.username) }}"
+           class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors {{ 'bg-amber-50' if comp.winner_id == p.user_id }}">
+            <!-- Rank -->
+            <span class="w-6 text-center text-sm font-bold {{ 'text-yellow-500' if loop.index == 1 else 'text-gray-400' if loop.index == 2 else 'text-orange-400' if loop.index == 3 else 'text-gray-300' }}">
+                {% if comp.winner_id == p.user_id %}🏆{% else %}{{ loop.index }}{% endif %}
+            </span>
+            <!-- Avatar -->
+            {% if p.user.avatar_filename %}
+            <img src="{{ upload_url(p.user.avatar_filename) }}"
+                 class="w-9 h-9 rounded-full object-cover flex-shrink-0">
+            {% else %}
+            <div class="w-9 h-9 rounded-full bg-maroon-100 flex items-center justify-center flex-shrink-0">
+                <span class="text-maroon text-xs font-bold">{{ p.user.display_name[0]|upper }}</span>
+            </div>
+            {% endif %}
+            <!-- Name + Progress -->
+            <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-gray-900 truncate">{{ p.user.display_name }}</p>
+                <!-- Progress bar -->
+                <div class="flex items-center gap-2 mt-1">
+                    <div class="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div class="h-full rounded-full transition-all {{ 'bg-gradient-to-r from-amber-400 to-orange-500' if loop.index == 1 else 'bg-maroon-300' }}"
+                             style="width: {{ [(p.beer_count / comp.target_beers * 100), 100] | min }}%"></div>
+                    </div>
+                    <span class="text-[10px] text-gray-400 font-medium flex-shrink-0">{{ p.beer_count }}/{{ comp.target_beers }}</span>
+                </div>
+            </div>
+            <!-- Verified badge -->
+            {% if p.verified_count > 0 %}
+            <span class="text-[10px] text-green-600 font-medium flex-shrink-0">
+                ✓ {{ p.verified_count }}
+            </span>
+            {% endif %}
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-center text-sm text-gray-400 py-8">Nog geen deelnemers</p>
+    {% endif %}
+</div>
+
+<!-- Recent Beers in Competition -->
+{% if recent_beers %}
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-4">
+    <div class="px-4 py-3 border-b border-gray-50">
+        <h2 class="text-sm font-semibold text-gray-700">Recente Bieren</h2>
+    </div>
+    <div class="divide-y divide-gray-50">
+        {% for cb in recent_beers %}
+        <div class="flex items-center gap-3 px-4 py-2.5">
+            {% if cb.user.avatar_filename %}
+            <img src="{{ upload_url(cb.user.avatar_filename) }}"
+                 class="w-7 h-7 rounded-full object-cover flex-shrink-0">
+            {% else %}
+            <div class="w-7 h-7 rounded-full bg-maroon-100 flex items-center justify-center flex-shrink-0">
+                <span class="text-maroon text-[10px] font-bold">{{ cb.user.display_name[0]|upper }}</span>
+            </div>
+            {% endif %}
+            <div class="flex-1 min-w-0">
+                <p class="text-sm text-gray-900 truncate">
+                    <span class="font-medium">{{ cb.user.display_name }}</span>
+                    <span class="text-gray-400">+{{ cb.beer_count }} {{ 'bieren' if cb.beer_count != 1 else 'bier' }}</span>
+                </p>
+                <p class="text-[10px] text-gray-400">{{ cb.created_at|timeago }}</p>
+            </div>
+            {% if cb.is_verified %}
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700">Geverifieerd ✓</span>
+            {% elif comp.status == 'active' %}
+            <button class="verify-btn text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-400 hover:bg-green-100 hover:text-green-600 transition-colors"
+                    data-beer-id="{{ cb.id }}">
+                Verifieer
+            </button>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Delete (admin only) -->
+{% if is_admin %}
+<form method="POST" action="{{ url_for('competitions.delete', id=comp.id) }}"
+      onsubmit="return confirm('Weet je zeker dat je deze competitie wilt verwijderen?')">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit"
+            class="w-full text-center text-sm text-red-400 hover:text-red-600 py-3 transition-colors">
+        Competitie verwijderen
+    </button>
+</form>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Competition beer verification
+(function() {
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('.verify-btn');
+        if (!btn) return;
+        e.preventDefault();
+
+        var beerId = btn.dataset.beerId;
+        var csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+        fetch('/api/competitions/beer/' + beerId + '/verify', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrf
+            }
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            if (data.success) {
+                btn.textContent = 'Geverifieerd ✓';
+                btn.classList.remove('bg-gray-100', 'text-gray-400', 'hover:bg-green-100', 'hover:text-green-600');
+                btn.classList.add('bg-green-100', 'text-green-700');
+                btn.disabled = true;
+            } else {
+                // Show error briefly
+                var orig = btn.textContent;
+                btn.textContent = data.error || 'Fout';
+                btn.classList.add('text-red-500');
+                setTimeout(function() {
+                    btn.textContent = orig;
+                    btn.classList.remove('text-red-500');
+                }, 2000);
+            }
+        })
+        .catch(function() {});
+    });
+})();
+</script>
+{% endblock %}

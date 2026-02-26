@@ -6,9 +6,57 @@ from . import bp
 from ..extensions import db
 from datetime import datetime, timedelta
 from ..models import (BeerPost, BeerPostGroup, Comment, GroupMember, DrinkingSession,
-                      SessionBeer, Tag, User, Group, Achievement, UserAchievement, Connection)
+                      SessionBeer, Tag, User, Group, Achievement, UserAchievement, Connection,
+                      Competition, CompetitionParticipant, CompetitionBeer)
 from .forms import BeerPostForm, CommentForm, SessionPostForm
 from .utils import process_upload
+
+
+def update_competition_counts(post):
+    """Check active competitions for the groups this post was shared to,
+    and create CompetitionBeer records + update participant counts.
+    Must be called BEFORE db.session.commit()."""
+    group_ids = [link.group_id for link in post.group_links]
+    if not group_ids:
+        return
+
+    active_comps = Competition.query.filter(
+        Competition.group_id.in_(group_ids),
+        Competition.status == 'active'
+    ).all()
+
+    for comp in active_comps:
+        participant = CompetitionParticipant.query.filter_by(
+            competition_id=comp.id,
+            user_id=post.user_id
+        ).first()
+        if not participant:
+            continue
+
+        # Prevent double counting
+        existing = CompetitionBeer.query.filter_by(
+            competition_id=comp.id,
+            post_id=post.id
+        ).first()
+        if existing:
+            continue
+
+        beer_count = post.beer_count or 1
+        comp_beer = CompetitionBeer(
+            competition_id=comp.id,
+            post_id=post.id,
+            user_id=post.user_id,
+            beer_count=beer_count,
+        )
+        db.session.add(comp_beer)
+
+        participant.beer_count = (participant.beer_count or 0) + beer_count
+
+        # Winner detection
+        if participant.beer_count >= comp.target_beers and comp.status == 'active':
+            comp.status = 'completed'
+            comp.winner_id = post.user_id
+            comp.completed_at = datetime.utcnow()
 
 
 def check_achievements(user):
@@ -114,6 +162,12 @@ def check_achievements(user):
         if week_posts >= threshold:
             _award(f'weekly_{threshold}')
 
+    # ── Competition win tiers ──
+    comp_wins = Competition.query.filter_by(winner_id=user.id, status='completed').count()
+    for threshold in [1, 3, 10]:
+        if comp_wins >= threshold:
+            _award(f'comp_win_{threshold}')
+
     if newly_unlocked:
         db.session.commit()
 
@@ -188,7 +242,14 @@ def create():
             db.session.add(link)
 
         extract_and_save_tags(form.caption.data)
+        update_competition_counts(post)
         db.session.commit()
+
+        # Check for competition wins
+        for cb in post.competition_beers:
+            if cb.competition.winner_id == current_user.id:
+                flash(f'🏆 Je hebt de competitie "{cb.competition.title}" gewonnen!', 'success')
+
         flash('Bier gepost!', 'success')
         return redirect(url_for('posts.detail', id=post.id))
 
@@ -352,7 +413,13 @@ def create_session():
             db.session.add(link)
 
         extract_and_save_tags(form.caption.data)
+        update_competition_counts(post)
         db.session.commit()
+
+        # Check for competition wins
+        for cb in post.competition_beers:
+            if cb.competition.winner_id == current_user.id:
+                flash(f'🏆 Je hebt de competitie "{cb.competition.title}" gewonnen!', 'success')
 
         # PB celebration flash messages
         has_pb = False

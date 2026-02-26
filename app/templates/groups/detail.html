@@ -44,6 +44,10 @@
             <span class="bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">{{ pending_count }}</span>
             {% endif %}
         </a>
+        <a href="{{ url_for('competitions.list_for_group', group_id=group.id) }}"
+           class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+            🏆 Competities
+        </a>
         {% if is_admin %}
         <a href="{{ url_for('groups.manage', id=group.id) }}"
            class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
@@ -65,8 +69,30 @@
     </div>
 </div>
 
-<!-- Group Record Banner -->
-{% if group_record %}
+<!-- Active Competition Banner (takes priority) -->
+{% if active_competition %}
+<a href="{{ url_for('competitions.detail', id=active_competition.id) }}"
+   class="block bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl text-white p-4 mb-4 hover:opacity-90 transition-opacity">
+    <div class="flex items-center gap-2 mb-1">
+        <span class="text-lg">🏆</span>
+        <p class="text-[10px] font-semibold text-white/70 uppercase tracking-wider">Actieve Competitie</p>
+    </div>
+    <p class="font-bold">{{ active_competition.title }}</p>
+    <p class="text-sm text-white/80">{{ active_competition.target_beers }} bieren · {{ active_competition.participant_count() }} deelnemers</p>
+</a>
+{% elif latest_completed_competition %}
+<!-- Latest Completed Competition Banner -->
+<a href="{{ url_for('competitions.detail', id=latest_completed_competition.id) }}"
+   class="block bg-gradient-to-r from-amber-600 to-amber-500 rounded-2xl text-white p-4 mb-4 hover:opacity-90 transition-opacity">
+    <div class="flex items-center gap-2 mb-1">
+        <span class="text-lg">🥇</span>
+        <p class="text-[10px] font-semibold text-white/70 uppercase tracking-wider">Laatste Competitie</p>
+    </div>
+    <p class="font-bold">{{ latest_completed_competition.title }}</p>
+    <p class="text-sm text-white/80">Winnaar: {{ latest_completed_competition.winner.display_name }} · {{ latest_completed_competition.target_beers }} bieren</p>
+</a>
+{% elif group_record %}
+<!-- Group Record Banner (fallback) -->
 <div class="bg-gradient-to-r from-maroon-800 to-maroon-600 rounded-2xl text-white p-4 mb-4">
     <p class="text-[10px] font-semibold text-white/60 uppercase tracking-wider mb-1">Groeprecord</p>
     <div class="flex items-baseline gap-2">

@@ -12,7 +12,8 @@ from flask_login import login_required, current_user
 from . import bp
 from ..extensions import db, limiter
 from ..models import (BeerPost, Like, Comment, Reaction, ALLOWED_REACTIONS,
-                      User, Group, Tag, Connection, GroupMember, GroupJoinRequest)
+                      User, Group, Tag, Connection, GroupMember, GroupJoinRequest,
+                      CompetitionBeer, CompetitionParticipant)
 
 logger = logging.getLogger(__name__)
 
@@ -392,6 +393,60 @@ def invite_to_group(id, user_id):
         db.session.commit()
 
     return jsonify(success=True, status='invited')
+
+
+# ── Competition verification ──────────────────────────────
+
+@bp.route('/competitions/beer/<int:beer_id>/verify', methods=['POST'])
+@login_required
+@limiter.limit("60 per minute")
+def verify_competition_beer(beer_id):
+    import re
+    from datetime import datetime
+
+    comp_beer = CompetitionBeer.query.get_or_404(beer_id)
+    post = BeerPost.query.get_or_404(comp_beer.post_id)
+
+    # Cannot verify your own post
+    if post.user_id == current_user.id:
+        return jsonify(success=False, error='Je kunt je eigen post niet verifiëren.'), 400
+
+    # Already verified
+    if comp_beer.is_verified:
+        return jsonify(success=False, error='Al geverifieerd.'), 400
+
+    # Competition must be active
+    if comp_beer.competition.status != 'active':
+        return jsonify(success=False, error='Competitie is al afgelopen.'), 400
+
+    # Check that current user is @mentioned in the caption or session beer notes
+    mentioned_usernames = []
+    if post.caption:
+        mentioned_usernames.extend(re.findall(r'@(\w+)', post.caption))
+    if post.session:
+        for beer in post.session.beers:
+            if beer.note:
+                mentioned_usernames.extend(re.findall(r'@(\w+)', beer.note))
+
+    mentioned_lower = [m.lower() for m in mentioned_usernames]
+    if current_user.username.lower() not in mentioned_lower:
+        return jsonify(success=False, error='Je bent niet getagd in deze post.'), 400
+
+    # Verify!
+    comp_beer.is_verified = True
+    comp_beer.verified_by_id = current_user.id
+    comp_beer.verified_at = datetime.utcnow()
+
+    # Update participant verified count
+    participant = CompetitionParticipant.query.filter_by(
+        competition_id=comp_beer.competition_id,
+        user_id=comp_beer.user_id
+    ).first()
+    if participant:
+        participant.verified_count = (participant.verified_count or 0) + comp_beer.beer_count
+
+    db.session.commit()
+    return jsonify(success=True, verified=True, verified_by=current_user.display_name)
 
 
 # ── Backup endpoint ──────────────────────────────────────
