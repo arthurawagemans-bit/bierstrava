@@ -111,6 +111,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Prevent double form submissions
+    document.addEventListener('submit', function(e) {
+        var form = e.target;
+        if (form.dataset.submitted) {
+            e.preventDefault();
+            return;
+        }
+        form.dataset.submitted = 'true';
+        var btn = form.querySelector('button[type="submit"]');
+        if (btn) {
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+        }
+    });
+
     // Infinite scroll for feed
     window.setupInfiniteScroll = function(containerSelector, url, pageParam) {
         let currentPage = 1;
