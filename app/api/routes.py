@@ -202,39 +202,15 @@ def search():
     q = request.args.get('q', '').strip()
 
     if not q:
-        # Suggestions mode: friends-of-friends + public groups
-        my_conn_ids = [c.followed_id for c in Connection.query.filter_by(
-            follower_id=current_user.id, status='accepted'
-        ).all()]
+        # Suggestions mode: all other users + all groups
+        suggested_users = User.query.filter(
+            User.id != current_user.id
+        ).order_by(User.created_at.desc()).limit(20).all()
 
-        suggested_users = []
-        fof_ids = []
-
-        if my_conn_ids:
-            fof_rows = Connection.query.filter(
-                Connection.follower_id.in_(my_conn_ids),
-                Connection.status == 'accepted',
-                Connection.followed_id != current_user.id,
-                ~Connection.followed_id.in_(my_conn_ids + [current_user.id]),
-            ).limit(10).all()
-            fof_ids = list({c.followed_id for c in fof_rows})
-            if fof_ids:
-                suggested_users = User.query.filter(User.id.in_(fof_ids)).all()
-
-        # Pad with recent users if fewer than 5
-        if len(suggested_users) < 5:
-            exclude = [current_user.id] + my_conn_ids + fof_ids
-            recent = User.query.filter(
-                ~User.id.in_(exclude)
-            ).order_by(User.created_at.desc()).limit(5 - len(suggested_users)).all()
-            suggested_users.extend(recent)
-
-        # Public groups user is not in
         my_group_ids = [m.group_id for m in current_user.group_memberships.all()]
         suggested_groups = Group.query.filter(
             ~Group.id.in_(my_group_ids) if my_group_ids else db.true(),
-            Group.is_private == False,
-        ).limit(5).all()
+        ).limit(20).all()
 
         return jsonify(
             suggestions=True,
@@ -250,15 +226,15 @@ def search():
             User.username.ilike(f'%{q}%'),
             User.display_name.ilike(f'%{q}%'),
         )
-    ).limit(10).all()
+    ).limit(20).all()
 
     groups = Group.query.filter(
         Group.name.ilike(f'%{q}%')
-    ).limit(10).all()
+    ).limit(20).all()
 
     tags = Tag.query.filter(
         Tag.name.ilike(f'%{q}%')
-    ).order_by(Tag.use_count.desc()).limit(10).all()
+    ).order_by(Tag.use_count.desc()).limit(20).all()
 
     return jsonify(
         suggestions=False,
