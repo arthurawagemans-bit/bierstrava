@@ -30,15 +30,16 @@ def index():
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     month_name = MONTH_NAMES_NL[now.month]
 
-    # ── Gladjakkers: fastest user per category (all time) ──
+    # ── Gladjakkers: fastest user per category this month ──
     gladjakkers = []
 
-    # Beer category: fastest single BeerPost.drink_time_seconds
+    # Beer category: fastest single BeerPost.drink_time_seconds this month
     beer_fastest = db.session.query(
         User.id, User.username, User.display_name, User.avatar_filename,
         db.func.min(BeerPost.drink_time_seconds).label('best_time')
     ).join(BeerPost, BeerPost.user_id == User.id).filter(
-        BeerPost.drink_time_seconds.isnot(None)
+        BeerPost.drink_time_seconds.isnot(None),
+        BeerPost.created_at >= month_start
     ).group_by(User.id).order_by(
         db.asc(db.func.min(BeerPost.drink_time_seconds))
     ).first()
@@ -63,7 +64,8 @@ def index():
             SessionBeer, SessionBeer.session_id == DrinkingSession.id
         ).filter(
             SessionBeer.label == cat_label,
-            SessionBeer.drink_time_seconds.isnot(None)
+            SessionBeer.drink_time_seconds.isnot(None),
+            SessionBeer.created_at >= month_start
         ).group_by(User.id).order_by(
             db.asc(db.func.min(SessionBeer.drink_time_seconds))
         ).first()
