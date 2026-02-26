@@ -1,0 +1,24 @@
+{
+  "name": "VEAU - Sociaal Zuipen",
+  "short_name": "VEAU",
+  "description": "Track je biertjes, race tegen je vrienden en word de snelste zuiper.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#800020",
+  "theme_color": "#800020",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/static/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

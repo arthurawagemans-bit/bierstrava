@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#800020">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon-192.png') }}">
     <title>{% block title %}VEAU{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -101,6 +104,7 @@
 
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
     <script src="{{ url_for('static', filename='js/mentions.js') }}"></script>
+    <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/static/sw.js');}</script>
     {% block scripts %}{% endblock %}
 </body>
 </html>
