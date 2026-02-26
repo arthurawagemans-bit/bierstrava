@@ -13,25 +13,18 @@ from .utils import process_upload
 
 
 def update_competition_counts(post):
-    """Check active competitions for the groups this post was shared to,
-    and create CompetitionBeer records + update participant counts.
+    """Count beers for ALL active competitions the user participates in.
+    Any beer post counts, regardless of which group it was shared to.
     Must be called BEFORE db.session.commit()."""
-    group_ids = [link.group_id for link in post.group_links]
-    if not group_ids:
-        return
-
-    active_comps = Competition.query.filter(
-        Competition.group_id.in_(group_ids),
+    active_participants = CompetitionParticipant.query.join(
+        Competition
+    ).filter(
+        CompetitionParticipant.user_id == post.user_id,
         Competition.status == 'active'
     ).all()
 
-    for comp in active_comps:
-        participant = CompetitionParticipant.query.filter_by(
-            competition_id=comp.id,
-            user_id=post.user_id
-        ).first()
-        if not participant:
-            continue
+    for participant in active_participants:
+        comp = participant.competition
 
         # Prevent double counting
         existing = CompetitionBeer.query.filter_by(
