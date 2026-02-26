@@ -1,135 +1,93 @@
-from flask import render_template, request
+from flask import render_template
 from flask_login import login_required, current_user
 from . import bp
 from ..extensions import db
-from ..models import User, BeerPost, BeerPostGroup, GroupMember, Group, Competition
-from datetime import datetime, timedelta
+from ..models import (User, BeerPost, DrinkingSession, SessionBeer,
+                      GroupMember, Group)
+from datetime import datetime
+
+
+CATEGORY_DEFS = [
+    ('Beer', None),
+    ('Spies', 'Spies'),
+    ('Golden Triangle', 'Golden Triangle'),
+    ('Kan', 'Kan'),
+    ('Platinum Triangle', 'Platinum Triangle'),
+    ('1/2 Krat', '1/2 Krat'),
+    ('Krat', 'Krat'),
+]
+
+MONTH_NAMES_NL = [
+    '', 'januari', 'februari', 'maart', 'april', 'mei', 'juni',
+    'juli', 'augustus', 'september', 'oktober', 'november', 'december'
+]
 
 
 @bp.route('/')
 @login_required
 def index():
-    period = request.args.get('period', 'all')
-    sort = request.args.get('sort', 'snelste')
-    group_id = request.args.get('group', None, type=int)
+    now = datetime.utcnow()
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    month_name = MONTH_NAMES_NL[now.month]
 
-    user_groups = GroupMember.query.filter_by(user_id=current_user.id).all()
-    groups = [m.group for m in user_groups]
+    # ── Gladjakkers: fastest user per category (all time) ──
+    gladjakkers = []
 
-    if group_id:
-        group = Group.query.get_or_404(group_id)
-        if not group.is_member(current_user):
-            group_id = None
-            rankings = get_global_leaderboard(period, sort)
-        else:
-            rankings = get_group_leaderboard(group_id, period, sort)
-    else:
-        rankings = get_global_leaderboard(period, sort)
+    # Beer category: fastest single BeerPost.drink_time_seconds
+    beer_fastest = db.session.query(
+        User.id, User.username, User.display_name, User.avatar_filename,
+        db.func.min(BeerPost.drink_time_seconds).label('best_time')
+    ).join(BeerPost, BeerPost.user_id == User.id).filter(
+        BeerPost.drink_time_seconds.isnot(None)
+    ).group_by(User.id).order_by(
+        db.asc(db.func.min(BeerPost.drink_time_seconds))
+    ).first()
 
-    # Competition wins (separate query, not period-filtered)
-    comp_wins = {}
-    if sort == 'overwinningen':
-        win_counts = db.session.query(
-            Competition.winner_id,
-            db.func.count(Competition.id).label('wins')
+    if beer_fastest:
+        gladjakkers.append({
+            'category': 'Beer',
+            'user': beer_fastest,
+            'time': beer_fastest.best_time,
+        })
+
+    # Session categories: fastest SessionBeer per label
+    for cat_name, cat_label in CATEGORY_DEFS:
+        if cat_label is None:
+            continue
+        row = db.session.query(
+            User.id, User.username, User.display_name, User.avatar_filename,
+            db.func.min(SessionBeer.drink_time_seconds).label('best_time')
+        ).join(
+            DrinkingSession, DrinkingSession.user_id == User.id
+        ).join(
+            SessionBeer, SessionBeer.session_id == DrinkingSession.id
         ).filter(
-            Competition.status == 'completed',
-            Competition.winner_id.isnot(None)
-        ).group_by(Competition.winner_id).all()
-        comp_wins = {w.winner_id: w.wins for w in win_counts}
+            SessionBeer.label == cat_label,
+            SessionBeer.drink_time_seconds.isnot(None)
+        ).group_by(User.id).order_by(
+            db.asc(db.func.min(SessionBeer.drink_time_seconds))
+        ).first()
+
+        if row:
+            gladjakkers.append({
+                'category': cat_name,
+                'user': row,
+                'time': row.best_time,
+            })
+
+    # ── Bier Buffels: most beers this month ──
+    buffels = db.session.query(
+        User.id, User.username, User.display_name, User.avatar_filename,
+        db.func.sum(BeerPost.beer_count).label('total_beers'),
+        db.func.count(BeerPost.id).label('post_count')
+    ).join(BeerPost, BeerPost.user_id == User.id).filter(
+        BeerPost.created_at >= month_start
+    ).group_by(User.id).order_by(
+        db.desc(db.func.sum(BeerPost.beer_count))
+    ).limit(50).all()
 
     return render_template('leaderboard/index.html',
-                           rankings=rankings,
-                           groups=groups,
-                           current_period=period,
-                           current_sort=sort,
-                           current_group_id=group_id,
-                           comp_wins=comp_wins,
+                           gladjakkers=gladjakkers,
+                           buffels=buffels,
+                           month_name=month_name,
                            active_nav='leaderboard')
-
-
-def _build_base_query():
-    return db.session.query(
-        User.id,
-        User.username,
-        User.display_name,
-        User.avatar_filename,
-        db.func.min(BeerPost.drink_time_seconds).label('best_time'),
-        db.func.sum(BeerPost.beer_count).label('total_beers'),
-        db.func.avg(BeerPost.drink_time_seconds).label('avg_time'),
-        db.func.count(BeerPost.id).label('post_count')
-    )
-
-
-def _apply_sort(query, sort):
-    if sort == 'bieren':
-        return query.order_by(db.desc(db.func.sum(BeerPost.beer_count)))
-    elif sort == 'gemiddelde':
-        return query.order_by(
-            db.case((db.func.avg(BeerPost.drink_time_seconds).is_(None), 1), else_=0),
-            db.asc(db.func.avg(BeerPost.drink_time_seconds))
-        )
-    else:  # snelste (default)
-        return query.order_by(
-            db.case((db.func.min(BeerPost.drink_time_seconds).is_(None), 1), else_=0),
-            db.asc(db.func.min(BeerPost.drink_time_seconds))
-        )
-
-
-def get_global_leaderboard(period='all', sort='snelste'):
-    if sort == 'overwinningen':
-        return get_competition_leaderboard()
-
-    query = _build_base_query().join(
-        BeerPost, BeerPost.user_id == User.id
-    ).filter(BeerPost.is_public == True)  # noqa: E712
-
-    query = apply_period_filter(query, period)
-    query = query.group_by(User.id)
-    query = _apply_sort(query, sort)
-    return query.limit(100).all()
-
-
-def get_group_leaderboard(group_id, period='all', sort='snelste'):
-    if sort == 'overwinningen':
-        return get_competition_leaderboard(group_id)
-
-    query = _build_base_query().join(
-        BeerPost, BeerPost.user_id == User.id
-    ).join(
-        BeerPostGroup, BeerPostGroup.post_id == BeerPost.id
-    ).filter(BeerPostGroup.group_id == group_id)
-
-    query = apply_period_filter(query, period)
-    query = query.group_by(User.id)
-    query = _apply_sort(query, sort)
-    return query.limit(100).all()
-
-
-def get_competition_leaderboard(group_id=None):
-    """Rankings by competition wins."""
-    query = db.session.query(
-        User.id,
-        User.username,
-        User.display_name,
-        User.avatar_filename,
-        db.func.count(Competition.id).label('wins')
-    ).join(
-        Competition, Competition.winner_id == User.id
-    ).filter(Competition.status == 'completed')
-
-    if group_id:
-        query = query.filter(Competition.group_id == group_id)
-
-    return query.group_by(User.id).order_by(
-        db.desc(db.func.count(Competition.id))
-    ).limit(100).all()
-
-
-def apply_period_filter(query, period):
-    now = datetime.utcnow()
-    if period == 'week':
-        query = query.filter(BeerPost.created_at >= now - timedelta(days=7))
-    elif period == 'month':
-        query = query.filter(BeerPost.created_at >= now - timedelta(days=30))
-    return query

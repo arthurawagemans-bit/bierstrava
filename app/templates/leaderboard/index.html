@@ -1,226 +1,166 @@
 {% extends "base.html" %}
-{% block title %}Wereldranglijst - VEAU{% endblock %}
+{% block title %}Eindbazen - VEAU{% endblock %}
 
 {% block content %}
-<h1 class="text-xl font-bold mb-4">Wereldranglijst</h1>
+<h1 class="text-xl font-bold mb-1">VEAU Eindbazen van {{ month_name }}</h1>
+<p class="text-xs text-gray-400 mb-5">De allerbeste zuipers van deze maand</p>
 
-<!-- Group Tabs -->
-<div class="flex gap-2 overflow-x-auto pb-2 mb-2 -mx-4 px-4 scrollbar-hide">
-    <a href="{{ url_for('leaderboard.index', period=current_period, sort=current_sort) }}"
-       class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors
-              {{ 'bg-maroon text-white' if not current_group_id else 'bg-white text-gray-600 border border-gray-200' }}">
-        Globaal
-    </a>
-    {% for group in groups %}
-    <a href="{{ url_for('leaderboard.index', group=group.id, period=current_period, sort=current_sort) }}"
-       class="flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors
-              {{ 'bg-maroon text-white' if current_group_id == group.id else 'bg-white text-gray-600 border border-gray-200' }}">
-        {{ group.name }}
-    </a>
-    {% endfor %}
-</div>
-
-<!-- Sort Category Tabs -->
-<div class="flex gap-1 bg-gray-100 rounded-xl p-1 mb-3">
-    {% for sort_key, label in [('snelste', 'Snelste'), ('bieren', 'Bieren'), ('gemiddelde', 'Gem.'), ('overwinningen', 'Wins')] %}
-    <a href="{{ url_for('leaderboard.index', sort=sort_key, period=current_period if sort_key != 'overwinningen' else 'all', group=current_group_id) }}"
-       class="flex-1 text-center py-2 rounded-lg text-sm font-medium transition-colors
-              {{ 'bg-white text-maroon shadow-sm' if current_sort == sort_key else 'text-gray-500' }}">
-        {{ label }}
-    </a>
-    {% endfor %}
-</div>
-
-<!-- Period Filter (hidden for competition wins) -->
-{% if current_sort != 'overwinningen' %}
-<div class="flex gap-1 bg-gray-100 rounded-xl p-1 mb-4">
-    {% for period, label in [('all', 'Altijd'), ('month', 'Maand'), ('week', 'Week')] %}
-    <a href="{{ url_for('leaderboard.index', period=period, sort=current_sort, group=current_group_id) }}"
-       class="flex-1 text-center py-2 rounded-lg text-sm font-medium transition-colors
-              {{ 'bg-white text-maroon shadow-sm' if current_period == period else 'text-gray-500' }}">
-        {{ label }}
-    </a>
-    {% endfor %}
-</div>
-{% endif %}
-
-{% if rankings %}
-<!-- Podium Top 3 -->
-{% if rankings|length >= 3 %}
-<div class="flex items-end justify-center gap-3 mb-5 px-2">
-    {# 2nd place - left #}
-    {% set r2 = rankings[1] %}
-    <div class="flex flex-col items-center w-1/3">
-        <a href="{{ url_for('profiles.view', username=r2.username) }}" class="flex flex-col items-center">
-            <div class="relative mb-1">
-                {% if r2.avatar_filename %}
-                <img src="{{ upload_url(r2.avatar_filename) }}"
-                     class="w-14 h-14 rounded-full object-cover border-2 border-gray-300 shadow-md">
-                {% else %}
-                <div class="w-14 h-14 rounded-full bg-maroon-100 flex items-center justify-center border-2 border-gray-300 shadow-md">
-                    <span class="text-maroon text-sm font-bold">{{ r2.display_name[0]|upper }}</span>
-                </div>
-                {% endif %}
-                <span class="absolute -bottom-1 -right-1 bg-gray-300 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">2</span>
-            </div>
-            <p class="text-xs font-semibold text-gray-700 truncate max-w-full text-center">{{ r2.display_name }}</p>
-            {% if current_sort == 'overwinningen' %}
-            <p class="text-[10px] text-gray-400 font-medium">{{ r2.wins }} wins</p>
-            {% elif current_sort == 'bieren' %}
-            <p class="text-[10px] text-gray-400 font-medium">{{ r2.total_beers|int }} bieren</p>
-            {% elif current_sort == 'gemiddelde' %}
-            <p class="text-[10px] text-gray-400 font-medium">{{ r2.avg_time|format_time }}</p>
-            {% else %}
-            <span class="time-badge text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5">{{ r2.best_time|format_time }}</span>
-            {% endif %}
-        </a>
-        <div class="w-full bg-gradient-to-t from-gray-200 to-gray-100 rounded-t-xl mt-2 flex items-center justify-center" style="height: 60px">
-            <span class="text-2xl font-bold text-gray-400">2</span>
-        </div>
+<!-- ── Gladjakkers ── -->
+<div class="mb-6">
+    <div class="flex items-center gap-2 mb-3">
+        <span class="text-lg">⚡</span>
+        <h2 class="text-base font-bold">Gladjakkers van {{ month_name }}</h2>
     </div>
+    <p class="text-[11px] text-gray-400 mb-3">Snelste tijd per categorie (aller tijden)</p>
 
-    {# 1st place - center #}
-    {% set r1 = rankings[0] %}
-    <div class="flex flex-col items-center w-1/3">
-        <a href="{{ url_for('profiles.view', username=r1.username) }}" class="flex flex-col items-center">
-            <span class="text-xl mb-0.5">👑</span>
-            <div class="relative mb-1">
-                {% if r1.avatar_filename %}
-                <img src="{{ upload_url(r1.avatar_filename) }}"
-                     class="w-18 h-18 rounded-full object-cover border-3 border-yellow-400 shadow-lg" style="width:72px;height:72px">
-                {% else %}
-                <div class="rounded-full bg-maroon-100 flex items-center justify-center border-3 border-yellow-400 shadow-lg" style="width:72px;height:72px">
-                    <span class="text-maroon text-lg font-bold">{{ r1.display_name[0]|upper }}</span>
-                </div>
-                {% endif %}
-                <span class="absolute -bottom-1 -right-1 bg-yellow-400 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">1</span>
-            </div>
-            <p class="text-sm font-bold text-gray-900 truncate max-w-full text-center">{{ r1.display_name }}</p>
-            {% if current_sort == 'overwinningen' %}
-            <p class="text-xs text-amber-600 font-semibold">{{ r1.wins }} wins</p>
-            {% elif current_sort == 'bieren' %}
-            <p class="text-xs text-amber-600 font-semibold">{{ r1.total_beers|int }} bieren</p>
-            {% elif current_sort == 'gemiddelde' %}
-            <span class="time-badge text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5">{{ r1.avg_time|format_time }}</span>
+    {% if gladjakkers %}
+    <div class="grid grid-cols-2 gap-2">
+        {% for g in gladjakkers %}
+        <a href="{{ url_for('profiles.view', username=g.user.username) }}"
+           class="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 flex flex-col items-center text-center hover:bg-gray-50 transition-colors {{ 'bg-maroon-50 border-maroon-100' if g.user.id == current_user.id }}">
+            {% if g.user.avatar_filename %}
+            <img src="{{ upload_url(g.user.avatar_filename) }}"
+                 class="w-11 h-11 rounded-full object-cover mb-1.5 border-2 border-amber-300 shadow-sm">
             {% else %}
-            <span class="time-badge text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5">{{ r1.best_time|format_time }}</span>
-            {% endif %}
-        </a>
-        <div class="w-full bg-gradient-to-t from-yellow-300 to-amber-100 rounded-t-xl mt-2 flex items-center justify-center" style="height: 80px">
-            <span class="text-3xl font-bold text-amber-500">1</span>
-        </div>
-    </div>
-
-    {# 3rd place - right #}
-    {% set r3 = rankings[2] %}
-    <div class="flex flex-col items-center w-1/3">
-        <a href="{{ url_for('profiles.view', username=r3.username) }}" class="flex flex-col items-center">
-            <div class="relative mb-1">
-                {% if r3.avatar_filename %}
-                <img src="{{ upload_url(r3.avatar_filename) }}"
-                     class="w-14 h-14 rounded-full object-cover border-2 border-orange-300 shadow-md">
-                {% else %}
-                <div class="w-14 h-14 rounded-full bg-maroon-100 flex items-center justify-center border-2 border-orange-300 shadow-md">
-                    <span class="text-maroon text-sm font-bold">{{ r3.display_name[0]|upper }}</span>
-                </div>
-                {% endif %}
-                <span class="absolute -bottom-1 -right-1 bg-orange-400 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">3</span>
+            <div class="w-11 h-11 rounded-full bg-maroon-100 flex items-center justify-center mb-1.5 border-2 border-amber-300 shadow-sm">
+                <span class="text-maroon text-sm font-bold">{{ g.user.display_name[0]|upper }}</span>
             </div>
-            <p class="text-xs font-semibold text-gray-700 truncate max-w-full text-center">{{ r3.display_name }}</p>
-            {% if current_sort == 'overwinningen' %}
-            <p class="text-[10px] text-gray-400 font-medium">{{ r3.wins }} wins</p>
-            {% elif current_sort == 'bieren' %}
-            <p class="text-[10px] text-gray-400 font-medium">{{ r3.total_beers|int }} bieren</p>
-            {% elif current_sort == 'gemiddelde' %}
-            <p class="text-[10px] text-gray-400 font-medium">{{ r3.avg_time|format_time }}</p>
-            {% else %}
-            <span class="time-badge text-[10px] font-bold px-2 py-0.5 rounded-full mt-0.5">{{ r3.best_time|format_time }}</span>
             {% endif %}
+            <p class="text-xs font-bold text-gray-900 truncate max-w-full">{{ g.user.display_name }}</p>
+            <p class="text-[10px] text-gray-400 mb-1">{{ g.category }}</p>
+            <span class="time-badge text-[10px] font-bold px-2 py-0.5 rounded-full">{{ g.time|format_time }}</span>
         </a>
-        <div class="w-full bg-gradient-to-t from-orange-200 to-orange-50 rounded-t-xl mt-2 flex items-center justify-center" style="height: 45px">
-            <span class="text-xl font-bold text-orange-400">3</span>
-        </div>
+        {% endfor %}
     </div>
+    {% else %}
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center">
+        <p class="text-sm text-gray-400">Nog geen tijden geregistreerd</p>
+    </div>
+    {% endif %}
 </div>
-{% endif %}
 
-<!-- Full Rankings -->
-<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-    {% for r in rankings %}
-    {% set rank = loop.index %}
-    {# Skip top 3 if podium was shown #}
-    {% if rankings|length < 3 or rank > 3 %}
-    <div class="flex items-center gap-3 px-4 py-3 {{ 'border-b border-gray-50' if not loop.last }}
-                {{ 'bg-maroon-50' if r.id == current_user.id }}">
-        <!-- Rank -->
-        <div class="w-8 text-center">
-            {% if rank <= 3 %}
-            <span class="text-lg font-bold {{ 'rank-1' if rank == 1 else 'rank-2' if rank == 2 else 'rank-3' }}">{{ rank }}</span>
-            {% else %}
-            <span class="text-sm text-gray-400 font-semibold">{{ rank }}</span>
-            {% endif %}
-        </div>
+<!-- ── Bier Buffels ── -->
+<div class="mb-6">
+    <div class="flex items-center gap-2 mb-3">
+        <span class="text-lg">🍺</span>
+        <h2 class="text-base font-bold">Bier Buffels van {{ month_name }}</h2>
+    </div>
+    <p class="text-[11px] text-gray-400 mb-3">Meeste bieren deze maand</p>
 
-        <!-- Avatar -->
-        {% if r.avatar_filename %}
-        <img src="{{ upload_url(r.avatar_filename) }}"
-             class="w-9 h-9 rounded-full object-cover flex-shrink-0">
-        {% else %}
-        <div class="w-9 h-9 rounded-full bg-maroon-100 flex items-center justify-center flex-shrink-0">
-            <span class="text-maroon text-xs font-bold">{{ r.display_name[0]|upper }}</span>
-        </div>
-        {% endif %}
-
-        <!-- Name -->
-        <div class="flex-1 min-w-0">
-            <a href="{{ url_for('profiles.view', username=r.username) }}"
-               class="font-semibold text-sm truncate block {{ 'text-maroon' if r.id == current_user.id else 'text-gray-900' }}">
-                {{ r.display_name }}
+    {% if buffels %}
+    <!-- Top 3 Podium -->
+    {% if buffels|length >= 3 %}
+    <div class="flex items-end justify-center gap-3 mb-4 px-2">
+        {# 2nd place #}
+        {% set r2 = buffels[1] %}
+        <div class="flex flex-col items-center w-1/3">
+            <a href="{{ url_for('profiles.view', username=r2.username) }}" class="flex flex-col items-center">
+                <div class="relative mb-1">
+                    {% if r2.avatar_filename %}
+                    <img src="{{ upload_url(r2.avatar_filename) }}"
+                         class="w-12 h-12 rounded-full object-cover border-2 border-gray-300 shadow-md">
+                    {% else %}
+                    <div class="w-12 h-12 rounded-full bg-maroon-100 flex items-center justify-center border-2 border-gray-300 shadow-md">
+                        <span class="text-maroon text-sm font-bold">{{ r2.display_name[0]|upper }}</span>
+                    </div>
+                    {% endif %}
+                    <span class="absolute -bottom-1 -right-1 bg-gray-300 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">2</span>
+                </div>
+                <p class="text-[11px] font-semibold text-gray-700 truncate max-w-full">{{ r2.display_name }}</p>
+                <p class="text-[10px] text-gray-400 font-medium">{{ r2.total_beers|int }} bieren</p>
             </a>
-            {% if current_sort == 'overwinningen' %}
-            <p class="text-xs text-gray-400">{{ r.wins }} competitie{{ 's' if r.wins != 1 }} gewonnen</p>
-            {% else %}
-            <p class="text-xs text-gray-400">{{ r.total_beers|int }} {{ 'bieren' if r.total_beers|int != 1 else 'bier' }}</p>
-            {% endif %}
+            <div class="w-full bg-gradient-to-t from-gray-200 to-gray-100 rounded-t-xl mt-2 flex items-center justify-center" style="height: 50px">
+                <span class="text-xl font-bold text-gray-400">2</span>
+            </div>
         </div>
 
-        <!-- Metric -->
-        <div class="text-right flex-shrink-0">
-            {% if current_sort == 'overwinningen' %}
-            <span class="text-sm font-bold text-amber-600">{{ r.wins }}x</span>
-            {% elif current_sort == 'bieren' %}
-            <span class="bg-maroon-50 text-maroon text-xs font-bold px-2.5 py-1 rounded-full">{{ r.total_beers|int }}</span>
-            {% elif current_sort == 'gemiddelde' %}
-            <span class="time-badge text-xs font-bold px-2.5 py-1 rounded-full">{{ r.avg_time|format_time }}</span>
-            <p class="text-[10px] text-gray-400 mt-1">best {{ r.best_time|format_time }}</p>
-            {% else %}
-            <span class="time-badge text-xs font-bold px-2.5 py-1 rounded-full">{{ r.best_time|format_time }}</span>
-            <p class="text-[10px] text-gray-400 mt-1">gem. {{ r.avg_time|format_time if r.avg_time else '--' }}</p>
-            {% endif %}
+        {# 1st place #}
+        {% set r1 = buffels[0] %}
+        <div class="flex flex-col items-center w-1/3">
+            <a href="{{ url_for('profiles.view', username=r1.username) }}" class="flex flex-col items-center">
+                <span class="text-lg mb-0.5">👑</span>
+                <div class="relative mb-1">
+                    {% if r1.avatar_filename %}
+                    <img src="{{ upload_url(r1.avatar_filename) }}"
+                         class="rounded-full object-cover border-3 border-yellow-400 shadow-lg" style="width:64px;height:64px">
+                    {% else %}
+                    <div class="rounded-full bg-maroon-100 flex items-center justify-center border-3 border-yellow-400 shadow-lg" style="width:64px;height:64px">
+                        <span class="text-maroon text-lg font-bold">{{ r1.display_name[0]|upper }}</span>
+                    </div>
+                    {% endif %}
+                    <span class="absolute -bottom-1 -right-1 bg-yellow-400 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">1</span>
+                </div>
+                <p class="text-xs font-bold text-gray-900 truncate max-w-full">{{ r1.display_name }}</p>
+                <p class="text-xs text-amber-600 font-semibold">{{ r1.total_beers|int }} bieren</p>
+            </a>
+            <div class="w-full bg-gradient-to-t from-yellow-300 to-amber-100 rounded-t-xl mt-2 flex items-center justify-center" style="height: 70px">
+                <span class="text-2xl font-bold text-amber-500">1</span>
+            </div>
+        </div>
+
+        {# 3rd place #}
+        {% set r3 = buffels[2] %}
+        <div class="flex flex-col items-center w-1/3">
+            <a href="{{ url_for('profiles.view', username=r3.username) }}" class="flex flex-col items-center">
+                <div class="relative mb-1">
+                    {% if r3.avatar_filename %}
+                    <img src="{{ upload_url(r3.avatar_filename) }}"
+                         class="w-12 h-12 rounded-full object-cover border-2 border-orange-300 shadow-md">
+                    {% else %}
+                    <div class="w-12 h-12 rounded-full bg-maroon-100 flex items-center justify-center border-2 border-orange-300 shadow-md">
+                        <span class="text-maroon text-sm font-bold">{{ r3.display_name[0]|upper }}</span>
+                    </div>
+                    {% endif %}
+                    <span class="absolute -bottom-1 -right-1 bg-orange-400 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">3</span>
+                </div>
+                <p class="text-[11px] font-semibold text-gray-700 truncate max-w-full">{{ r3.display_name }}</p>
+                <p class="text-[10px] text-gray-400 font-medium">{{ r3.total_beers|int }} bieren</p>
+            </a>
+            <div class="w-full bg-gradient-to-t from-orange-200 to-orange-50 rounded-t-xl mt-2 flex items-center justify-center" style="height: 35px">
+                <span class="text-lg font-bold text-orange-400">3</span>
+            </div>
         </div>
     </div>
     {% endif %}
-    {% endfor %}
-</div>
 
-{% else %}
-<div class="text-center py-16">
-    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-        </svg>
-    </div>
-    <h3 class="text-gray-600 font-semibold mb-1">Nog geen ranglijst</h3>
-    <p class="text-gray-400 text-sm">
-        {% if current_sort == 'overwinningen' %}
-        Win competities om hier te verschijnen.
-        {% elif current_group_id %}
-        Post bieren in deze groep om hier te verschijnen.
-        {% else %}
-        Maak een openbaar bericht om op de wereldranglijst te verschijnen.
+    <!-- Full ranking list -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        {% for r in buffels %}
+        {% set rank = loop.index %}
+        {% if buffels|length < 3 or rank > 3 %}
+        <div class="flex items-center gap-3 px-4 py-3 {{ 'border-b border-gray-50' if not loop.last }}
+                    {{ 'bg-maroon-50' if r.id == current_user.id }}">
+            <div class="w-8 text-center">
+                {% if rank <= 3 %}
+                <span class="text-lg font-bold {{ 'rank-1' if rank == 1 else 'rank-2' if rank == 2 else 'rank-3' }}">{{ rank }}</span>
+                {% else %}
+                <span class="text-sm text-gray-400 font-semibold">{{ rank }}</span>
+                {% endif %}
+            </div>
+            {% if r.avatar_filename %}
+            <img src="{{ upload_url(r.avatar_filename) }}"
+                 class="w-9 h-9 rounded-full object-cover flex-shrink-0">
+            {% else %}
+            <div class="w-9 h-9 rounded-full bg-maroon-100 flex items-center justify-center flex-shrink-0">
+                <span class="text-maroon text-xs font-bold">{{ r.display_name[0]|upper }}</span>
+            </div>
+            {% endif %}
+            <div class="flex-1 min-w-0">
+                <a href="{{ url_for('profiles.view', username=r.username) }}"
+                   class="font-semibold text-sm truncate block {{ 'text-maroon' if r.id == current_user.id else 'text-gray-900' }}">
+                    {{ r.display_name }}
+                </a>
+                <p class="text-xs text-gray-400">{{ r.post_count }} posts</p>
+            </div>
+            <span class="bg-maroon-50 text-maroon text-xs font-bold px-2.5 py-1 rounded-full">{{ r.total_beers|int }}</span>
+        </div>
         {% endif %}
-    </p>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center">
+        <p class="text-sm text-gray-400">Nog geen bieren deze maand. Wees de eerste!</p>
+    </div>
+    {% endif %}
 </div>
-{% endif %}
 {% endblock %}
