@@ -14,23 +14,29 @@
     <p class="text-[11px] text-gray-400 mb-3">Snelste tijd per categorie (aller tijden)</p>
 
     {% if gladjakkers %}
-    <div class="grid grid-cols-2 gap-2">
-        {% for g in gladjakkers %}
-        <a href="{{ url_for('profiles.view', username=g.user.username) }}"
-           class="bg-white rounded-2xl shadow-sm border border-gray-100 p-3 flex flex-col items-center text-center hover:bg-gray-50 transition-colors {{ 'bg-maroon-50 border-maroon-100' if g.user.id == current_user.id }}">
-            {% if g.user.avatar_filename %}
-            <img src="{{ upload_url(g.user.avatar_filename) }}"
-                 class="w-11 h-11 rounded-full object-cover mb-1.5 border-2 border-amber-300 shadow-sm">
-            {% else %}
-            <div class="w-11 h-11 rounded-full bg-maroon-100 flex items-center justify-center mb-1.5 border-2 border-amber-300 shadow-sm">
-                <span class="text-maroon text-sm font-bold">{{ g.user.display_name[0]|upper }}</span>
-            </div>
-            {% endif %}
-            <p class="text-xs font-bold text-gray-900 truncate max-w-full">{{ g.user.display_name }}</p>
-            <p class="text-[10px] text-gray-400 mb-1">{{ g.category }}</p>
-            <span class="time-badge text-[10px] font-bold px-2 py-0.5 rounded-full">{{ g.time|format_time }}</span>
-        </a>
-        {% endfor %}
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
+        <div class="space-y-0">
+            {% for g in gladjakkers %}
+            <a href="{{ url_for('profiles.view', username=g.user.username) }}"
+               class="flex items-center justify-between py-2.5 {{ 'border-t border-gray-100' if not loop.first }} hover:opacity-80 transition-opacity">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    {% if g.user.avatar_filename %}
+                    <img src="{{ upload_url(g.user.avatar_filename) }}"
+                         class="w-7 h-7 rounded-full object-cover flex-shrink-0">
+                    {% else %}
+                    <div class="w-7 h-7 rounded-full bg-maroon-100 flex items-center justify-center flex-shrink-0">
+                        <span class="text-maroon text-[10px] font-bold">{{ g.user.display_name[0]|upper }}</span>
+                    </div>
+                    {% endif %}
+                    <span class="text-sm font-medium text-gray-700">{{ g.category }}</span>
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <span class="text-[10px] text-gray-400 truncate max-w-[80px]">{{ g.user.display_name }}</span>
+                    <span class="time-badge text-xs font-bold px-2.5 py-0.5 rounded-full">{{ g.time|format_time }}</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
     </div>
     {% else %}
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 text-center">
