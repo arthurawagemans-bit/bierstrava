@@ -7,7 +7,7 @@
 <div class="flex items-center justify-between mb-4">
     <div class="flex items-center gap-2">
         <img src="{{ url_for('static', filename='logo.svg') }}" class="w-8 h-8" alt="VEAU">
-        <h1 class="text-xl font-bold">VEAU</h1>
+        <h1 class="text-xl font-bold">VEAU <span class="text-sm font-normal text-gray-400">- sociaal zuipen</span></h1>
     </div>
     {% if current_user.pending_request_count() > 0 %}
     <a href="{{ url_for('profiles.connection_requests') }}"
