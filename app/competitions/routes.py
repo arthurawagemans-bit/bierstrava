@@ -48,12 +48,13 @@ def create(group_id):
         db.session.add(comp)
         db.session.flush()
 
-        # Auto-join creator
-        participant = CompetitionParticipant(
-            competition_id=comp.id,
-            user_id=current_user.id,
-        )
-        db.session.add(participant)
+        # Auto-join all group members
+        members = GroupMember.query.filter_by(group_id=group.id).all()
+        for m in members:
+            db.session.add(CompetitionParticipant(
+                competition_id=comp.id,
+                user_id=m.user_id,
+            ))
         db.session.commit()
 
         flash(f'Competitie "{comp.title}" gestart!', 'success')
@@ -79,7 +80,16 @@ def detail(id):
     for p in participants:
         _ = p.user  # trigger lazy load
 
+    # Auto-join if group member but not yet participant
     is_participant = comp.is_participant(current_user)
+    if not is_participant and comp.status == 'active':
+        db.session.add(CompetitionParticipant(
+            competition_id=comp.id,
+            user_id=current_user.id,
+        ))
+        db.session.commit()
+        is_participant = True
+
     is_admin = group.is_admin(current_user)
 
     # Recent beers in this competition with post info
@@ -94,54 +104,6 @@ def detail(id):
                            is_admin=is_admin,
                            recent_beers=recent_beers)
 
-
-@bp.route('/<int:id>/deelnemen', methods=['POST'])
-@login_required
-def join(id):
-    comp = Competition.query.get_or_404(id)
-    if not comp.group.is_member(current_user):
-        abort(403)
-    if comp.status != 'active':
-        flash('Deze competitie is al afgelopen.', 'info')
-        return redirect(url_for('competitions.detail', id=comp.id))
-    if comp.is_participant(current_user):
-        flash('Je doet al mee aan deze competitie.', 'info')
-        return redirect(url_for('competitions.detail', id=comp.id))
-
-    participant = CompetitionParticipant(
-        competition_id=comp.id,
-        user_id=current_user.id,
-    )
-    db.session.add(participant)
-    db.session.commit()
-
-    flash('Je doet mee aan de competitie!', 'success')
-    return redirect(url_for('competitions.detail', id=comp.id))
-
-
-@bp.route('/<int:id>/verlaten', methods=['POST'])
-@login_required
-def leave(id):
-    comp = Competition.query.get_or_404(id)
-    if comp.status != 'active':
-        flash('Deze competitie is al afgelopen.', 'info')
-        return redirect(url_for('competitions.detail', id=comp.id))
-
-    participant = CompetitionParticipant.query.filter_by(
-        competition_id=comp.id, user_id=current_user.id
-    ).first()
-    if not participant:
-        abort(400)
-
-    # Remove participant and their competition beers
-    CompetitionBeer.query.filter_by(
-        competition_id=comp.id, user_id=current_user.id
-    ).delete()
-    db.session.delete(participant)
-    db.session.commit()
-
-    flash('Je hebt de competitie verlaten.', 'success')
-    return redirect(url_for('competitions.list_for_group', group_id=comp.group_id))
 
 
 @bp.route('/<int:id>/verwijderen', methods=['POST'])

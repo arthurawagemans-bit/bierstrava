@@ -58,29 +58,6 @@
     Deel via WhatsApp
 </a>
 
-<!-- Join / Leave -->
-{% if comp.status == 'active' %}
-<div class="mb-4">
-    {% if not is_participant %}
-    <form method="POST" action="{{ url_for('competitions.join', id=comp.id) }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit"
-                class="w-full bg-maroon text-white py-3 rounded-xl font-semibold hover:bg-maroon-700 transition-colors shadow-md">
-            Meedoen
-        </button>
-    </form>
-    {% else %}
-    <form method="POST" action="{{ url_for('competitions.leave', id=comp.id) }}"
-          onsubmit="return confirm('Weet je zeker dat je de competitie wilt verlaten?')">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-        <button type="submit"
-                class="w-full bg-gray-100 text-gray-500 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-colors text-sm">
-            Competitie verlaten
-        </button>
-    </form>
-    {% endif %}
-</div>
-{% endif %}
 
 <!-- Leaderboard -->
 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-4">
