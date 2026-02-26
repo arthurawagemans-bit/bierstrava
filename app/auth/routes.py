@@ -51,10 +51,15 @@ def register():
 
         login_user(user)
         logger.info('New user registered: %s', user.username)
-        flash('Welcome to VEAU!', 'success')
-        return redirect(url_for('main.feed'))
+        return redirect(url_for('auth.onboarding'))
 
     return render_template('auth/register.html', form=form)
+
+
+@bp.route('/welcome')
+@login_required
+def onboarding():
+    return render_template('auth/onboarding.html')
 
 
 @bp.route('/logout', methods=['POST'])

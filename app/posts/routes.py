@@ -12,7 +12,7 @@ from .utils import process_upload
 
 
 def check_achievements(user):
-    """Check and award any newly earned achievements. Returns list of newly unlocked."""
+    """Check and award any newly earned tiered achievements. Returns list of newly unlocked."""
     newly_unlocked = []
 
     def _award(slug):
@@ -22,90 +22,97 @@ def check_achievements(user):
             if ach:
                 newly_unlocked.append(ach)
 
-    # Total beers posted
+    # ── Bier tiers (total beers posted) ──
     total_beers = db.session.query(db.func.sum(BeerPost.beer_count)).filter(
         BeerPost.user_id == user.id
     ).scalar() or 0
+    for threshold in [1, 10, 100, 500, 1000, 2000]:
+        if total_beers >= threshold:
+            _award(f'bier_{threshold}')
 
-    # first_bier: posted at least 1 bier
-    if total_beers >= 1:
-        _award('first_bier')
-
-    # centurion: 100 total beers
-    if total_beers >= 100:
-        _award('centurion')
-
-    # speed_demon: any time under 3 seconds
+    # ── Speed tiers (fastest single time) ──
     fastest = db.session.query(db.func.min(SessionBeer.drink_time_seconds)).join(
         DrinkingSession
     ).filter(
         DrinkingSession.user_id == user.id,
         SessionBeer.drink_time_seconds.isnot(None)
     ).scalar()
-    if fastest is not None and fastest < 3.0:
-        _award('speed_demon')
+    if fastest is not None:
+        for threshold in [5, 3, 2, 1.5]:
+            if fastest < threshold:
+                _award(f'speed_{threshold}')
 
-    # pb_hunter: 5 PBs total
+    # ── Social tiers (accepted connections) ──
+    conn_count = Connection.query.filter(
+        db.or_(Connection.follower_id == user.id, Connection.followed_id == user.id),
+        Connection.status == 'accepted'
+    ).count()
+    for threshold in [1, 5, 10, 25]:
+        if conn_count >= threshold:
+            _award(f'social_{threshold}')
+
+    # ── Streak tiers (max consecutive days posting) ──
+    recent_dates = db.session.query(
+        db.func.date(BeerPost.created_at)
+    ).filter(BeerPost.user_id == user.id).distinct().order_by(
+        db.func.date(BeerPost.created_at).desc()
+    ).limit(60).all()
+    dates = []
+    for r in recent_dates:
+        d = r[0] if isinstance(r[0], str) else str(r[0])
+        try:
+            from datetime import date as dt_date
+            dates.append(dt_date.fromisoformat(d))
+        except (ValueError, TypeError):
+            pass
+    max_streak = 0
+    if dates:
+        streak = 1
+        for i in range(1, len(dates)):
+            if (dates[i - 1] - dates[i]).days == 1:
+                streak += 1
+            else:
+                streak = 1
+            if streak > max_streak:
+                max_streak = streak
+        max_streak = max(max_streak, 1)
+    for threshold in [3, 7, 14, 30]:
+        if max_streak >= threshold:
+            _award(f'streak_{threshold}')
+
+    # ── PB tiers (personal bests beaten) ──
     pb_count = db.session.query(db.func.count(SessionBeer.id)).join(
         DrinkingSession
     ).filter(
         DrinkingSession.user_id == user.id,
         SessionBeer.is_pb == True
     ).scalar() or 0
-    if pb_count >= 5:
-        _award('pb_hunter')
+    for threshold in [1, 5, 10, 25]:
+        if pb_count >= threshold:
+            _award(f'pb_{threshold}')
 
-    # social: 5 connections
-    conn_count = Connection.query.filter(
-        db.or_(Connection.follower_id == user.id, Connection.followed_id == user.id),
-        Connection.status == 'accepted'
-    ).count()
-    if conn_count >= 5:
-        _award('social')
+    # ── Challenge tiers (Kan/Spies/Golden Triangle/etc completed) ──
+    challenge_labels = ['Kan', 'Spies', 'Golden Triangle', 'Platinum Triangle', '1/2 Krat', 'Krat']
+    challenge_count = db.session.query(db.func.count(SessionBeer.id)).join(
+        DrinkingSession
+    ).filter(
+        DrinkingSession.user_id == user.id,
+        SessionBeer.label.in_(challenge_labels),
+        SessionBeer.drink_time_seconds.isnot(None)
+    ).scalar() or 0
+    for threshold in [1, 5, 10, 25]:
+        if challenge_count >= threshold:
+            _award(f'challenge_{threshold}')
 
-    # on_fire: 5 posts in one week
+    # ── Weekly tiers (most posts in last 7 days) ──
     week_ago = datetime.utcnow() - timedelta(days=7)
     week_posts = BeerPost.query.filter(
         BeerPost.user_id == user.id,
         BeerPost.created_at >= week_ago
     ).count()
-    if week_posts >= 5:
-        _award('on_fire')
-
-    # consistent: 3 days in a row
-    recent_dates = db.session.query(
-        db.func.date(BeerPost.created_at)
-    ).filter(BeerPost.user_id == user.id).distinct().order_by(
-        db.func.date(BeerPost.created_at).desc()
-    ).limit(10).all()
-    dates = [r[0] for r in recent_dates]
-    if len(dates) >= 3:
-        # Check if any 3 consecutive dates are in sequence
-        for i in range(len(dates) - 2):
-            d0 = dates[i] if isinstance(dates[i], str) else str(dates[i])
-            d1 = dates[i+1] if isinstance(dates[i+1], str) else str(dates[i+1])
-            d2 = dates[i+2] if isinstance(dates[i+2], str) else str(dates[i+2])
-            try:
-                from datetime import date as dt_date
-                dd0 = dt_date.fromisoformat(d0)
-                dd1 = dt_date.fromisoformat(d1)
-                dd2 = dt_date.fromisoformat(d2)
-                if (dd0 - dd1).days == 1 and (dd1 - dd2).days == 1:
-                    _award('consistent')
-                    break
-            except (ValueError, TypeError):
-                pass
-
-    # challenger: completed a Kan
-    kan_count = db.session.query(db.func.count(SessionBeer.id)).join(
-        DrinkingSession
-    ).filter(
-        DrinkingSession.user_id == user.id,
-        SessionBeer.label == 'Kan',
-        SessionBeer.drink_time_seconds.isnot(None)
-    ).scalar() or 0
-    if kan_count >= 1:
-        _award('challenger')
+    for threshold in [5, 10, 20]:
+        if week_posts >= threshold:
+            _award(f'weekly_{threshold}')
 
     if newly_unlocked:
         db.session.commit()

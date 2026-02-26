@@ -2,146 +2,40 @@
 {% block title %}Post Bier - VEAU{% endblock %}
 
 {% block content %}
-<form method="POST" enctype="multipart/form-data" id="post-form">
-    {{ form.hidden_tag() }}
-    {{ form.drink_time_seconds(id="time-input", type="hidden") }}
-    <input type="hidden" name="is_vdl" id="is-vdl-input" value="">
-    <input type="hidden" name="beer_count" id="beer-count-input" value="1">
+<!-- ═══════════════════════════════════════════ -->
+<!-- Full-Screen Tap-to-Time                    -->
+<!-- ═══════════════════════════════════════════ -->
+<div id="timer-screen" data-pb="{{ personal_best or '' }}" data-countdown="{{ 'true' if current_user.countdown_enabled else 'false' }}"
+     class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-50 cursor-pointer select-none hidden"
+     style="-webkit-tap-highlight-color: transparent;">
 
-    <!-- ═══════════════════════════════════════════ -->
-    <!-- STEP 1: Full-Screen Tap-to-Time             -->
-    <!-- ═══════════════════════════════════════════ -->
-    <div id="timer-screen" data-pb="{{ personal_best or '' }}" data-countdown="{{ 'true' if current_user.countdown_enabled else 'false' }}"
-         class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-50 cursor-pointer select-none hidden"
-         style="-webkit-tap-highlight-color: transparent;">
+    <!-- Subtle hint at top -->
+    <p id="timer-hint" class="text-sm text-gray-400 mb-auto mt-16 transition-opacity duration-300">
+        {{ 'Tap to start countdown' if current_user.countdown_enabled else 'Tap anywhere to start' }}
+    </p>
 
-        <!-- Subtle hint at top -->
-        <p id="timer-hint" class="text-sm text-gray-400 mb-auto mt-16 transition-opacity duration-300">
-            {{ 'Tap to start countdown' if current_user.countdown_enabled else 'Tap anywhere to start' }}
+    <!-- Time display — center of screen -->
+    <div class="flex-1 flex flex-col items-center justify-center">
+        <div id="stopwatch-display" class="text-8xl font-bold text-maroon font-mono tracking-wide transition-colors duration-300">
+            0.000
+        </div>
+        <p id="timer-seconds-label" class="text-sm text-gray-400 mt-2">seconds</p>
+        {% if personal_best %}
+        <p id="pb-indicator" class="text-xs text-gray-400 mt-4">
+            PB: <span class="font-bold text-maroon font-mono">{{ personal_best|format_time }}</span>
         </p>
-
-        <!-- Time display — center of screen -->
-        <div class="flex-1 flex flex-col items-center justify-center">
-            <div id="stopwatch-display" class="text-8xl font-bold text-maroon font-mono tracking-wide transition-colors duration-300">
-                0.000
-            </div>
-            <p id="timer-seconds-label" class="text-sm text-gray-400 mt-2">seconds</p>
-            {% if personal_best %}
-            <p id="pb-indicator" class="text-xs text-gray-400 mt-4">
-                PB: <span class="font-bold text-maroon font-mono">{{ personal_best|format_time }}</span>
-            </p>
-            {% endif %}
-        </div>
-
-        <!-- Bottom area -->
-        <div class="mb-16 flex flex-col items-center gap-3">
-            <button type="button" id="stopwatch-reset"
-                    class="text-sm text-gray-400 hover:text-gray-600 transition-colors hidden"
-                    onclick="event.stopPropagation()">
-                Reset
-            </button>
-        </div>
+        {% endif %}
     </div>
 
-    <!-- ═══════════════════════════════════════════ -->
-    <!-- STEP 2: Post Form (hidden until time set)   -->
-    <!-- ═══════════════════════════════════════════ -->
-    <div id="post-section" class="hidden">
-
-        <!-- Time Summary -->
-        <div class="bg-white rounded-2xl border border-gray-100 p-4 mb-5 flex items-center justify-between">
-            <div>
-                <p class="text-xs text-gray-400">Your time</p>
-                <p id="time-summary" class="text-3xl font-bold text-maroon font-mono">0.000<span class="text-base text-gray-400 ml-1">s</span></p>
-            </div>
-            <button type="button" id="retake-btn"
-                    class="text-sm text-maroon font-medium bg-maroon-50 px-4 py-2 rounded-xl hover:bg-maroon-100 transition-colors">
-                Retake
-            </button>
-        </div>
-
-        <!-- PB celebration -->
-        <div id="pb-celebration" class="hidden bg-green-50 border border-green-200 rounded-xl p-3 mb-5 text-center">
-            <p class="text-green-700 font-bold text-sm">NEW PERSONAL BEST!</p>
-        </div>
-
-        <!-- Manual time edit -->
-        <details class="mb-5">
-            <summary class="text-xs text-gray-400 cursor-pointer hover:text-gray-600">Change time manually</summary>
-            <div class="mt-2 bg-white rounded-xl border border-gray-200 p-3">
-                <div class="flex items-center gap-2">
-                    <input type="number" id="manual-time-input"
-                           class="w-full text-center text-2xl font-bold text-maroon bg-transparent border-0 focus:ring-0 focus:outline-none font-mono"
-                           step="0.001" min="0.001" inputmode="decimal" placeholder="0.000">
-                    <span class="text-sm text-gray-400 flex-shrink-0">sec</span>
-                </div>
-            </div>
-        </details>
-
-        <!-- Photo Upload -->
-        <div class="mb-5">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Photo</label>
-            <div id="photo-area" class="photo-preview-area rounded-2xl overflow-hidden cursor-pointer relative"
-                 onclick="document.getElementById('photo-input').click()">
-                <div id="photo-placeholder" class="flex flex-col items-center justify-center py-10">
-                    <svg class="w-10 h-10 text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
-                    <p class="text-sm text-gray-400">Tap to add a photo</p>
-                </div>
-                <img id="photo-preview" src="" alt="Preview" class="w-full aspect-[4/3] object-cover hidden">
-            </div>
-            {{ form.photo(id="photo-input", class="hidden", accept="image/*") }}
-            {% for error in form.photo.errors %}
-            <p class="text-red-500 text-xs mt-1">{{ error }}</p>
-            {% endfor %}
-        </div>
-
-        <!-- Caption -->
-        <div class="mb-5">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Caption</label>
-            {{ form.caption(class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm resize-none", rows="2", placeholder="How was it? @ to tag people, groups or more", **{"data-mentions": ""}) }}
-            {% for error in form.caption.errors %}
-            <p class="text-red-500 text-xs mt-1">{{ error }}</p>
-            {% endfor %}
-        </div>
-
-        <!-- Share photo with -->
-        <div class="mb-5">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Share photo with</label>
-            <p class="text-xs text-gray-400 mb-2">Time and caption are always visible to connections</p>
-            <div class="space-y-2">
-                <label class="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-gray-100 cursor-pointer">
-                    <input type="checkbox" name="is_public" id="public-toggle" value="y"
-                           class="w-4 h-4 rounded border-gray-300 text-maroon focus:ring-maroon"
-                           {{ 'checked' if last_public }}>
-                    <span class="text-sm text-gray-700">Your connections</span>
-                </label>
-                {% for value, label in form.groups.choices %}
-                <label class="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-gray-100 cursor-pointer">
-                    <input type="checkbox" name="groups" value="{{ value }}"
-                           class="w-4 h-4 rounded border-gray-300 text-maroon focus:ring-maroon"
-                           {{ 'checked' if value in last_group_ids }}>
-                    <span class="text-sm text-gray-700">{{ label }}</span>
-                </label>
-                {% endfor %}
-            </div>
-        </div>
-
-        {% for error in form.drink_time_seconds.errors %}
-        <p class="text-red-500 text-xs mt-1 mb-3">{{ error }}</p>
-        {% endfor %}
-
-        <!-- Submit -->
-        <button type="submit"
-                class="w-full bg-maroon text-white py-3.5 rounded-xl font-semibold hover:bg-maroon-700 transition-colors shadow-md text-base mb-4">
-            Post Bier
+    <!-- Bottom area -->
+    <div class="mb-16 flex flex-col items-center gap-3">
+        <button type="button" id="stopwatch-reset"
+                class="text-sm text-gray-400 hover:text-gray-600 transition-colors hidden"
+                onclick="event.stopPropagation()">
+            Reset
         </button>
     </div>
-</form>
+</div>
 
 <!-- ═══════════════════════════════════════════ -->
 <!-- Session Form (separate form)               -->

@@ -1,13 +1,14 @@
 from flask import render_template, redirect, url_for, flash, abort, current_app
 from flask_login import login_required, current_user
 from sqlalchemy.orm import joinedload
+from collections import OrderedDict
 from . import bp
 from ..extensions import db
 from ..models import (User, Connection, BeerPost, SessionBeer, DrinkingSession,
                       Like, Comment, Achievement, UserAchievement)
 from .forms import EditProfileForm
 from ..posts.utils import process_upload
-from datetime import datetime, timedelta
+from datetime import datetime, date as dt_date, timedelta
 
 
 @bp.route('/u/<username>')
@@ -82,15 +83,115 @@ def view(username):
                 'count': data['count'],
             })
 
-    # Achievements
+    # Tiered achievements — group by category
     all_achievements = Achievement.query.order_by(Achievement.id).all()
     earned_slugs = {ua.achievement_slug for ua in
                     UserAchievement.query.filter_by(user_id=user.id).all()}
-    achievements = [
-        {'slug': a.slug, 'name': a.name, 'icon': a.icon,
-         'description': a.description, 'earned': a.slug in earned_slugs}
-        for a in all_achievements
-    ]
+
+    # Group achievements by category prefix (e.g. 'bier', 'speed', etc.)
+    cat_order = ['bier', 'speed', 'social', 'streak', 'pb', 'challenge', 'weekly']
+    cat_labels = {
+        'bier': 'Biers', 'speed': 'Speed', 'social': 'Social',
+        'streak': 'Streak', 'pb': 'Personal Bests',
+        'challenge': 'Challenges', 'weekly': 'Weekly',
+    }
+    cat_map = OrderedDict((k, []) for k in cat_order)
+    for a in all_achievements:
+        prefix = a.slug.rsplit('_', 1)[0]
+        if prefix in cat_map:
+            cat_map[prefix].append({
+                'slug': a.slug, 'name': a.name, 'icon': a.icon,
+                'description': a.description, 'earned': a.slug in earned_slugs,
+            })
+
+    # Compute progress values per category
+    progress = {}
+    if can_view and stats:
+        progress['bier'] = stats['total_beers']
+    if can_view:
+        progress['social'] = user.connection_count()
+        # PB count
+        progress['pb'] = db.session.query(db.func.count(SessionBeer.id)).join(
+            DrinkingSession
+        ).filter(
+            DrinkingSession.user_id == user.id,
+            SessionBeer.is_pb == True
+        ).scalar() or 0
+        # Challenge count
+        challenge_labels = ['Kan', 'Spies', 'Golden Triangle',
+                            'Platinum Triangle', '1/2 Krat', 'Krat']
+        progress['challenge'] = db.session.query(db.func.count(SessionBeer.id)).join(
+            DrinkingSession
+        ).filter(
+            DrinkingSession.user_id == user.id,
+            SessionBeer.label.in_(challenge_labels),
+            SessionBeer.drink_time_seconds.isnot(None)
+        ).scalar() or 0
+        # Weekly posts (last 7 days)
+        week_ago = datetime.utcnow() - timedelta(days=7)
+        progress['weekly'] = BeerPost.query.filter(
+            BeerPost.user_id == user.id,
+            BeerPost.created_at >= week_ago
+        ).count()
+        # Fastest time (for speed — lower is better, display as value)
+        fastest = db.session.query(db.func.min(SessionBeer.drink_time_seconds)).join(
+            DrinkingSession
+        ).filter(
+            DrinkingSession.user_id == user.id,
+            SessionBeer.drink_time_seconds.isnot(None)
+        ).scalar()
+        progress['speed'] = round(fastest, 2) if fastest else None
+        # Max streak
+        recent_dates = db.session.query(
+            db.func.date(BeerPost.created_at)
+        ).filter(BeerPost.user_id == user.id).distinct().order_by(
+            db.func.date(BeerPost.created_at).desc()
+        ).limit(60).all()
+        dates = []
+        for r in recent_dates:
+            d = r[0] if isinstance(r[0], str) else str(r[0])
+            try:
+                dates.append(dt_date.fromisoformat(d))
+            except (ValueError, TypeError):
+                pass
+        max_streak = 0
+        if dates:
+            streak = 1
+            for i in range(1, len(dates)):
+                if (dates[i - 1] - dates[i]).days == 1:
+                    streak += 1
+                else:
+                    streak = 1
+                if streak > max_streak:
+                    max_streak = streak
+            max_streak = max(max_streak, 1)
+        progress['streak'] = max_streak
+
+    # Build final categories list for template
+    achievement_cats = []
+    for key in cat_order:
+        tiers = cat_map[key]
+        if not tiers:
+            continue
+        earned_tiers = [t for t in tiers if t['earned']]
+        best = earned_tiers[-1] if earned_tiers else None
+        # Find next tier to earn
+        next_tier = None
+        for t in tiers:
+            if not t['earned']:
+                next_tier = t
+                break
+        achievement_cats.append({
+            'key': key,
+            'label': cat_labels.get(key, key),
+            'icon': tiers[0]['icon'],
+            'tiers': tiers,
+            'earned_count': len(earned_tiers),
+            'total_count': len(tiers),
+            'best': best,
+            'next_tier': next_tier,
+            'progress': progress.get(key),
+        })
 
     return render_template('profiles/view.html',
                            profile_user=user,
@@ -98,7 +199,7 @@ def view(username):
                            stats=stats,
                            posts=posts,
                            category_stats=category_stats,
-                           achievements=achievements,
+                           achievement_cats=achievement_cats,
                            active_nav='profile' if user.id == current_user.id else '')
 
 

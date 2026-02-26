@@ -14,7 +14,6 @@ document.addEventListener('DOMContentLoaded', function() {
     var display = document.getElementById('stopwatch-display');
     var hint = document.getElementById('timer-hint');
     var resetBtn = document.getElementById('stopwatch-reset');
-    var timeInput = document.getElementById('time-input');
 
     // Session elements
     var sessionBeerList = document.getElementById('session-beer-list');
@@ -174,7 +173,7 @@ document.addEventListener('DOMContentLoaded', function() {
         elapsed = (performance.now() - startTime) / 1000;
         display.textContent = formatMs(elapsed);
 
-        hint.textContent = 'Tap to try again';
+        hint.textContent = 'Tap to time another';
         hint.classList.remove('opacity-50');
         resetBtn.classList.remove('hidden');
 

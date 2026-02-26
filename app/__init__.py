@@ -147,20 +147,60 @@ def create_app(config_class=Config):
                 db.session.commit()
                 logger.info('Added missing countdown_enabled column')
 
-        # Seed achievements if not exist
-        from .models import Achievement
+        # Seed tiered achievements
+        from .models import Achievement, UserAchievement
         _achievements = [
-            ('first_bier', 'First Bier', '🍺', 'Post your first bier'),
-            ('speed_demon', 'Speed Demon', '🏃', 'Record a time under 3 seconds'),
-            ('on_fire', 'On Fire', '🔥', 'Post 5 times in one week'),
-            ('centurion', 'Centurion', '👑', 'Post 100 biers total'),
-            ('pb_hunter', 'PB Hunter', '🥇', 'Beat your personal best 5 times'),
-            ('social', 'Social Butterfly', '🫂', 'Connect with 5 people'),
-            ('consistent', 'Consistent', '🎯', 'Post 3 days in a row'),
-            ('challenger', 'Challenger', '🏆', 'Complete a Kan challenge'),
+            # Bier tiers (total beers posted)
+            ('bier_1', 'First Bier', '🍺', 'Post your first bier'),
+            ('bier_10', '10 Biers', '🍺', 'Post 10 biers'),
+            ('bier_100', 'Centurion', '🍺', 'Post 100 biers'),
+            ('bier_500', 'Legend', '🍺', 'Post 500 biers'),
+            ('bier_1000', 'Machine', '🍺', 'Post 1000 biers'),
+            ('bier_2000', 'GOAT', '🍺', 'Post 2000 biers'),
+            # Speed tiers (fastest single time)
+            ('speed_5', 'Quick Sip', '🏃', 'Under 5 seconds'),
+            ('speed_3', 'Speed Demon', '🏃', 'Under 3 seconds'),
+            ('speed_2', 'Lightning', '🏃', 'Under 2 seconds'),
+            ('speed_1.5', 'Inhuman', '🏃', 'Under 1.5 seconds'),
+            # Social tiers (connections)
+            ('social_1', 'First Mate', '🫂', 'Connect with 1 person'),
+            ('social_5', 'Social', '🫂', 'Connect with 5 people'),
+            ('social_10', 'Popular', '🫂', 'Connect with 10 people'),
+            ('social_25', 'Influencer', '🫂', 'Connect with 25 people'),
+            # Streak tiers (consecutive days posting)
+            ('streak_3', 'Hat Trick', '🎯', '3 days in a row'),
+            ('streak_7', 'Full Week', '🎯', '7 days in a row'),
+            ('streak_14', 'Fortnight', '🎯', '14 days in a row'),
+            ('streak_30', 'Iron Will', '🎯', '30 days in a row'),
+            # PB tiers (personal bests beaten)
+            ('pb_1', 'Record Breaker', '🥇', 'Beat your PB'),
+            ('pb_5', 'PB Hunter', '🥇', 'Beat your PB 5 times'),
+            ('pb_10', 'PB Machine', '🥇', 'Beat your PB 10 times'),
+            ('pb_25', 'PB Legend', '🥇', 'Beat your PB 25 times'),
+            # Challenge tiers (Kan/Spies/etc completed)
+            ('challenge_1', 'Challenger', '🏆', 'Complete a challenge'),
+            ('challenge_5', 'Veteran', '🏆', 'Complete 5 challenges'),
+            ('challenge_10', 'Champion', '🏆', 'Complete 10 challenges'),
+            ('challenge_25', 'Master', '🏆', 'Complete 25 challenges'),
+            # Weekly tiers (posts in one week)
+            ('weekly_5', 'On Fire', '🔥', '5 posts in one week'),
+            ('weekly_10', 'Blazing', '🔥', '10 posts in one week'),
+            ('weekly_20', 'Inferno', '🔥', '20 posts in one week'),
         ]
+        new_slugs = {slug for slug, _, _, _ in _achievements}
+        # Remove old non-tiered achievements
+        old_achs = Achievement.query.filter(~Achievement.slug.in_(new_slugs)).all()
+        for old in old_achs:
+            UserAchievement.query.filter_by(achievement_slug=old.slug).delete()
+            db.session.delete(old)
+        # Add new achievements
         for slug, name, icon, desc in _achievements:
-            if not Achievement.query.filter_by(slug=slug).first():
+            existing = Achievement.query.filter_by(slug=slug).first()
+            if existing:
+                existing.name = name
+                existing.icon = icon
+                existing.description = desc
+            else:
                 db.session.add(Achievement(slug=slug, name=name, icon=icon, description=desc))
         db.session.commit()
 

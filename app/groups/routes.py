@@ -14,7 +14,20 @@ from ..posts.utils import process_upload
 def list_groups():
     memberships = GroupMember.query.filter_by(user_id=current_user.id).all()
     groups = [m.group for m in memberships]
-    return render_template('groups/list.html', groups=groups, active_nav='groups')
+    my_group_ids = [m.group_id for m in memberships]
+
+    # Discover groups: groups the user is NOT a member of
+    if my_group_ids:
+        discover_groups = Group.query.filter(
+            ~Group.id.in_(my_group_ids)
+        ).order_by(Group.created_at.desc()).limit(20).all()
+    else:
+        discover_groups = Group.query.order_by(
+            Group.created_at.desc()
+        ).limit(20).all()
+
+    return render_template('groups/list.html', groups=groups,
+                           discover_groups=discover_groups, active_nav='groups')
 
 
 @bp.route('/create', methods=['GET', 'POST'])

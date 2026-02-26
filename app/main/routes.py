@@ -26,7 +26,15 @@ def feed():
             html += render_template('components/_post_card_item.html', post=post)
         return jsonify(html=html, has_more=posts.has_next)
 
-    return render_template('main/feed.html', posts=posts, active_nav='feed')
+    # Check if feed is empty — show suggestions for new/lonely users
+    suggested_users = []
+    if not posts.items and page == 1:
+        suggested_users = User.query.filter(
+            User.id != current_user.id
+        ).order_by(User.created_at.desc()).limit(8).all()
+
+    return render_template('main/feed.html', posts=posts,
+                           suggested_users=suggested_users, active_nav='feed')
 
 
 def get_feed_posts(user, page=1, per_page=20):
@@ -60,6 +68,22 @@ def get_feed_posts(user, page=1, per_page=20):
 
     # Batch load like/comment counts + user liked status to avoid N+1
     _annotate_posts(combined.items, user)
+
+    # If no posts from connections/groups, show recent public posts instead
+    if not combined.items and page == 1:
+        public_posts = BeerPost.query.filter(
+            BeerPost.user_id != user.id,
+            BeerPost.is_public == True,
+        ).options(
+            joinedload(BeerPost.author),
+            joinedload(BeerPost.session).subqueryload(DrinkingSession.beers),
+            subqueryload(BeerPost.group_links),
+        ).order_by(
+            BeerPost.created_at.desc()
+        ).paginate(page=1, per_page=10, error_out=False)
+
+        _annotate_posts(public_posts.items, user)
+        return public_posts
 
     return combined
 

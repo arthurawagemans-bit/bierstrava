@@ -5,6 +5,29 @@
 {% block content %}
 <!-- Profile Header -->
 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 mb-4">
+    {% if current_user.id == profile_user.id %}
+    <!-- Top-right icons for own profile -->
+    <div class="flex justify-end gap-2 -mt-1 -mr-1 mb-2">
+        <a href="{{ url_for('profiles.edit', username=profile_user.username) }}" class="text-gray-400 hover:text-gray-600 transition-colors p-1">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+            </svg>
+        </a>
+        {% set notif_count = current_user.pending_request_count() %}
+        <a href="{{ url_for('settings.index') }}" class="relative text-gray-400 hover:text-gray-600 transition-colors p-1">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            {% if notif_count > 0 %}
+            <span class="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[16px] h-[16px] flex items-center justify-center px-1">{{ notif_count }}</span>
+            {% endif %}
+        </a>
+    </div>
+    {% endif %}
+
     <div class="flex items-start gap-4">
         <!-- Avatar -->
         {% if profile_user.avatar_filename %}
@@ -19,6 +42,9 @@
         <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2">
                 <h1 class="text-lg font-bold truncate">{{ profile_user.display_name }}</h1>
+                {% if stats and stats.total_beers > 0 %}
+                <span class="text-xs font-bold text-maroon bg-maroon-50 px-2 py-0.5 rounded-full flex-shrink-0">Totale bakken: {{ stats.total_beers }}</span>
+                {% endif %}
             </div>
             <p class="text-sm text-gray-400">@{{ profile_user.username }}</p>
             {% if profile_user.bio %}
@@ -42,28 +68,9 @@
         {% endif %}
     </div>
 
-    <!-- Action buttons -->
+    <!-- Action buttons (other users only) -->
+    {% if current_user.id != profile_user.id %}
     <div class="mt-4">
-        {% if current_user.id == profile_user.id %}
-        <div class="flex gap-2">
-            <a href="{{ url_for('profiles.edit', username=profile_user.username) }}"
-               class="flex-1 text-center bg-gray-100 text-gray-700 py-2 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">
-                Edit Profile
-            </a>
-            {% set notif_count = current_user.pending_request_count() %}
-            <a href="{{ url_for('settings.index') }}"
-               class="relative bg-gray-100 text-gray-700 p-2 rounded-xl hover:bg-gray-200 transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                </svg>
-                {% if notif_count > 0 %}
-                <span class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">{{ notif_count }}</span>
-                {% endif %}
-            </a>
-        </div>
-        {% else %}
         {% set status = current_user.connection_status(profile_user) %}
         {% if status == 'accepted' %}
         <form method="POST" action="{{ url_for('profiles.disconnect', username=profile_user.username) }}">
@@ -74,7 +81,7 @@
         </form>
         {% elif status == 'pending' %}
         <button disabled class="w-full bg-maroon-50 text-maroon py-2 rounded-xl text-sm font-medium opacity-80">
-            Pending
+            Requested
         </button>
         {% else %}
         <form method="POST" action="{{ url_for('profiles.connect', username=profile_user.username) }}">
@@ -84,51 +91,46 @@
             </button>
         </form>
         {% endif %}
-        {% endif %}
     </div>
+    {% endif %}
 </div>
 
 {% if can_view %}
-<!-- Stats Grid -->
-{% if stats %}
-<div class="grid grid-cols-2 gap-3 mb-4">
-    <div class="bg-white rounded-xl p-3 border border-gray-100 text-center">
-        <p class="text-2xl font-bold text-maroon">{{ stats.best_time|format_time }}</p>
-        <p class="text-xs text-gray-500">Best Time</p>
-    </div>
-    <div class="bg-white rounded-xl p-3 border border-gray-100 text-center">
-        <p class="text-2xl font-bold text-maroon">{{ stats.avg_time|format_time }}</p>
-        <p class="text-xs text-gray-500">Avg Time</p>
-    </div>
-    <div class="bg-white rounded-xl p-3 border border-gray-100 text-center">
-        <p class="text-2xl font-bold text-gray-700">{{ stats.beers_this_month }}</p>
-        <p class="text-xs text-gray-500">This Month</p>
-    </div>
-    <div class="bg-white rounded-xl p-3 border border-gray-100 text-center">
-        <p class="text-2xl font-bold text-gray-700">{{ stats.total_beers }}</p>
-        <p class="text-xs text-gray-500">Total Biers</p>
-    </div>
-</div>
-{% endif %}
-
 <!-- PBs per Category -->
 {% if category_stats %}
-<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
-    <h3 class="text-sm font-semibold text-gray-700 mb-3">Personal Bests</h3>
+<div id="pb-card" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
+    <div class="flex items-center mb-3 bg-gray-100 rounded-full p-0.5">
+        <button id="pb-tab-pb" type="button"
+                class="flex-1 text-xs font-semibold py-1.5 rounded-full text-center transition-colors bg-white text-gray-900 shadow-sm">
+            Personal Bests
+        </button>
+        <button id="pb-tab-count" type="button"
+                class="flex-1 text-xs font-semibold py-1.5 rounded-full text-center transition-colors text-gray-400">
+            Count
+        </button>
+    </div>
     <div class="space-y-0">
         {% for cat in category_stats %}
         <div class="flex items-center justify-between py-2.5 {{ 'border-t border-gray-100' if not loop.first }}">
-            <div class="flex items-center gap-2">
-                <span class="text-sm font-medium {{ 'text-gray-700' if cat.count > 0 else 'text-gray-400' }}">{{ cat.name }}</span>
-                <span class="text-[11px] text-gray-400">{{ cat.count }}×</span>
+            <span class="text-sm font-medium {{ 'text-gray-700' if cat.count > 0 else 'text-gray-400' }}">{{ cat.name }}</span>
+            <div>
+                <span class="pb-time">
+                    {% if cat.pb %}
+                    <span class="time-badge text-xs font-bold px-2.5 py-0.5 rounded-full">{{ cat.pb|format_time }}</span>
+                    {% elif cat.count > 0 %}
+                    <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700">VDL</span>
+                    {% else %}
+                    <span class="text-xs text-gray-300 px-2.5 py-0.5">—</span>
+                    {% endif %}
+                </span>
+                <span class="pb-count hidden">
+                    {% if cat.count > 0 %}
+                    <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-700">{{ cat.count }}×</span>
+                    {% else %}
+                    <span class="text-xs text-gray-300 px-2.5 py-0.5">0</span>
+                    {% endif %}
+                </span>
             </div>
-            {% if cat.pb %}
-            <span class="time-badge text-xs font-bold px-2.5 py-0.5 rounded-full">{{ cat.pb|format_time }}</span>
-            {% elif cat.count > 0 %}
-            <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700">VDL</span>
-            {% else %}
-            <span class="text-xs text-gray-300 px-2.5 py-0.5">—</span>
-            {% endif %}
         </div>
         {% endfor %}
     </div>
@@ -136,14 +138,49 @@
 {% endif %}
 
 <!-- Achievements -->
-{% if achievements %}
+{% if achievement_cats %}
 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
     <h3 class="text-sm font-semibold text-gray-700 mb-3">Achievements</h3>
-    <div class="grid grid-cols-4 gap-2">
-        {% for ach in achievements %}
-        <div class="flex flex-col items-center text-center p-2 rounded-xl {{ '' if ach.earned else 'opacity-30' }}" title="{{ ach.description }}">
-            <span class="text-2xl mb-0.5">{{ ach.icon }}</span>
-            <span class="text-[10px] font-medium text-gray-600 leading-tight">{{ ach.name }}</span>
+    <div class="space-y-0">
+        {% for cat in achievement_cats %}
+        <div class="ach-cat cursor-pointer {{ 'border-t border-gray-100' if not loop.first }}"
+             data-cat="{{ cat.key }}">
+            <!-- Category row -->
+            <div class="flex items-center gap-3 py-2.5">
+                <span class="text-xl {{ '' if cat.earned_count > 0 else 'opacity-30' }}">{{ cat.icon }}</span>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium {{ 'text-gray-800' if cat.earned_count > 0 else 'text-gray-400' }} truncate">
+                        {% if cat.best %}{{ cat.best.name }}{% else %}{{ cat.tiers[0].name }}{% endif %}
+                    </p>
+                    <p class="text-[10px] text-gray-400">
+                        {% if cat.best %}{{ cat.best.description }}{% else %}{{ cat.tiers[0].description }}{% endif %}
+                    </p>
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <span class="text-[10px] font-bold {{ 'text-maroon' if cat.earned_count > 0 else 'text-gray-300' }}">{{ cat.earned_count }}/{{ cat.total_count }}</span>
+                    <svg class="ach-chevron w-4 h-4 text-gray-300 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </div>
+            </div>
+            <!-- Expandable tier ladder -->
+            <div class="ach-tiers hidden pb-3 pl-9">
+                {% for tier in cat.tiers %}
+                <div class="flex items-center gap-2 py-1.5">
+                    <div class="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0 {{ 'bg-green-100' if tier.earned else 'bg-gray-100' }}">
+                        {% if tier.earned %}
+                        <svg class="w-2.5 h-2.5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                        </svg>
+                        {% else %}
+                        <div class="w-1.5 h-1.5 rounded-full bg-gray-300"></div>
+                        {% endif %}
+                    </div>
+                    <span class="text-xs {{ 'font-semibold text-gray-800' if tier.earned else 'text-gray-400' }}">{{ tier.name }}</span>
+                    <span class="text-[10px] text-gray-300 ml-auto">{{ tier.description }}</span>
+                </div>
+                {% endfor %}
+            </div>
         </div>
         {% endfor %}
     </div>
@@ -175,5 +212,56 @@
     <p class="text-gray-400 text-sm">Connect with this user to see their posts.</p>
 </div>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    var tabPb = document.getElementById('pb-tab-pb');
+    var tabCount = document.getElementById('pb-tab-count');
+    if (!tabPb || !tabCount) return;
+
+    var times = document.querySelectorAll('.pb-time');
+    var counts = document.querySelectorAll('.pb-count');
+    var active = 'bg-white text-gray-900 shadow-sm';
+    var inactive = 'text-gray-400';
+
+    function showPb() {
+        times.forEach(function(el) { el.classList.remove('hidden'); });
+        counts.forEach(function(el) { el.classList.add('hidden'); });
+        tabPb.className = 'flex-1 text-xs font-semibold py-1.5 rounded-full text-center transition-colors ' + active;
+        tabCount.className = 'flex-1 text-xs font-semibold py-1.5 rounded-full text-center transition-colors ' + inactive;
+    }
+
+    function showCount() {
+        times.forEach(function(el) { el.classList.add('hidden'); });
+        counts.forEach(function(el) { el.classList.remove('hidden'); });
+        tabCount.className = 'flex-1 text-xs font-semibold py-1.5 rounded-full text-center transition-colors ' + active;
+        tabPb.className = 'flex-1 text-xs font-semibold py-1.5 rounded-full text-center transition-colors ' + inactive;
+    }
+
+    tabPb.addEventListener('click', showPb);
+    tabCount.addEventListener('click', showCount);
+})();
+
+(function() {
+    document.querySelectorAll('.ach-cat').forEach(function(cat) {
+        cat.addEventListener('click', function() {
+            var tiers = cat.querySelector('.ach-tiers');
+            var chevron = cat.querySelector('.ach-chevron');
+            var isOpen = !tiers.classList.contains('hidden');
+
+            // Close all others
+            document.querySelectorAll('.ach-tiers').forEach(function(t) { t.classList.add('hidden'); });
+            document.querySelectorAll('.ach-chevron').forEach(function(c) { c.style.transform = ''; });
+
+            if (!isOpen) {
+                tiers.classList.remove('hidden');
+                chevron.style.transform = 'rotate(180deg)';
+            }
+        });
+    });
+})();
+</script>
 {% endblock %}
 

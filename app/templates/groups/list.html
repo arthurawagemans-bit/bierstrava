@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% from "components/group_card.html" import render_group %}
-{% block title %}My Groups - VEAU{% endblock %}
+{% block title %}Groups - VEAU{% endblock %}
 
 {% block content %}
 <div class="flex items-center justify-between mb-6">
-    <h1 class="text-xl font-bold">My Groups</h1>
+    <h1 class="text-xl font-bold">Groups</h1>
     <a href="{{ url_for('groups.create') }}"
        class="bg-maroon text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-maroon-700 transition-colors">
         + New Group
@@ -12,87 +12,94 @@
 </div>
 
 {% if groups %}
+<div class="mb-6">
+    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">My Groups</h2>
     {% for group in groups %}
         {{ render_group(group, current_user) }}
     {% endfor %}
-{% else %}
-<!-- Empty state: show what a group looks like -->
-<div class="text-center mb-6">
+</div>
+{% endif %}
+
+{% if discover_groups %}
+<div class="mb-4">
+    <h2 class="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Discover Groups</h2>
+    <div class="space-y-2">
+        {% for g in discover_groups %}
+        <div class="flex items-center gap-3 py-2.5 px-3 bg-white rounded-xl border border-gray-100">
+            {% if g.avatar_filename %}
+            <img src="{{ upload_url(g.avatar_filename) }}" class="w-11 h-11 rounded-xl object-cover flex-shrink-0">
+            {% else %}
+            <div class="w-11 h-11 rounded-xl bg-maroon-100 flex items-center justify-center flex-shrink-0">
+                <span class="text-maroon font-bold text-lg">{{ g.name[0]|upper }}</span>
+            </div>
+            {% endif %}
+            <div class="flex-1 min-w-0">
+                <p class="font-semibold text-sm text-gray-900 truncate">{{ g.name }}</p>
+                <p class="text-xs text-gray-400 truncate">{{ g.member_count() }} member{{ 's' if g.member_count() != 1 }}</p>
+            </div>
+            {% if g.is_private %}
+            <button class="discover-join-btn text-xs bg-maroon text-white px-3.5 py-1.5 rounded-full font-medium flex-shrink-0"
+                    data-group-id="{{ g.id }}">Request</button>
+            {% else %}
+            <button class="discover-join-btn text-xs bg-maroon text-white px-3.5 py-1.5 rounded-full font-medium flex-shrink-0"
+                    data-group-id="{{ g.id }}">Join</button>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if not groups and not discover_groups %}
+<div class="text-center py-12">
     <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
         <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
         </svg>
     </div>
-    <h3 class="text-gray-600 font-semibold mb-1">No groups yet!</h3>
-    <p class="text-gray-400 text-sm">Create a group or join one with an invite link.</p>
-</div>
-
-<!-- Preview: what a group page looks like -->
-<div class="opacity-40 pointer-events-none">
-    <!-- Stats Grid -->
-    <div class="grid grid-cols-2 gap-3 mb-4">
-        <div class="bg-white rounded-xl p-3 border border-gray-100 text-center">
-            <p class="text-2xl font-bold text-maroon">--</p>
-            <p class="text-xs text-gray-500">Best Time</p>
-        </div>
-        <div class="bg-white rounded-xl p-3 border border-gray-100 text-center">
-            <p class="text-2xl font-bold text-maroon">--</p>
-            <p class="text-xs text-gray-500">Avg Time</p>
-        </div>
-        <div class="bg-white rounded-xl p-3 border border-gray-100 text-center">
-            <p class="text-2xl font-bold text-gray-700">0</p>
-            <p class="text-xs text-gray-500">Total Beers</p>
-        </div>
-        <div class="bg-white rounded-xl p-3 border border-gray-100 text-center">
-            <p class="text-2xl font-bold text-gray-700">0</p>
-            <p class="text-xs text-gray-500">Members</p>
-        </div>
-    </div>
-
-    <!-- Leaderboard Preview -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-4">
-        <h3 class="text-sm font-semibold text-gray-700 mb-3">Leaderboard</h3>
-        <div class="space-y-3">
-            <div class="flex items-center gap-3 py-1.5">
-                <span class="w-5 text-center text-sm font-bold text-yellow-500">1</span>
-                <div class="w-8 h-8 rounded-full bg-gray-200"></div>
-                <div class="flex-1"><div class="h-3 bg-gray-200 rounded w-24"></div></div>
-                <div class="h-6 bg-gray-200 rounded-full w-16"></div>
-            </div>
-            <div class="flex items-center gap-3 py-1.5">
-                <span class="w-5 text-center text-sm font-bold text-gray-400">2</span>
-                <div class="w-8 h-8 rounded-full bg-gray-200"></div>
-                <div class="flex-1"><div class="h-3 bg-gray-200 rounded w-20"></div></div>
-                <div class="h-6 bg-gray-200 rounded-full w-16"></div>
-            </div>
-            <div class="flex items-center gap-3 py-1.5">
-                <span class="w-5 text-center text-sm font-bold text-orange-400">3</span>
-                <div class="w-8 h-8 rounded-full bg-gray-200"></div>
-                <div class="flex-1"><div class="h-3 bg-gray-200 rounded w-28"></div></div>
-                <div class="h-6 bg-gray-200 rounded-full w-16"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Members Preview -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4">
-        <h3 class="text-sm font-semibold text-gray-700 mb-3">Members</h3>
-        <div class="flex flex-wrap gap-2">
-            <div class="flex items-center gap-2 bg-gray-50 rounded-full pl-1 pr-3 py-1">
-                <div class="w-6 h-6 rounded-full bg-gray-200"></div>
-                <div class="h-2.5 bg-gray-200 rounded w-12"></div>
-            </div>
-            <div class="flex items-center gap-2 bg-gray-50 rounded-full pl-1 pr-3 py-1">
-                <div class="w-6 h-6 rounded-full bg-gray-200"></div>
-                <div class="h-2.5 bg-gray-200 rounded w-16"></div>
-            </div>
-            <div class="flex items-center gap-2 bg-gray-50 rounded-full pl-1 pr-3 py-1">
-                <div class="w-6 h-6 rounded-full bg-gray-200"></div>
-                <div class="h-2.5 bg-gray-200 rounded w-10"></div>
-            </div>
-        </div>
-    </div>
+    <h3 class="text-gray-600 font-semibold mb-1">No groups yet</h3>
+    <p class="text-gray-400 text-sm">Create a group to compete with your mates!</p>
 </div>
 {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    function ajaxPost(url) {
+        return fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content,
+            },
+        }).then(function(r) { return r.json(); });
+    }
+
+    document.querySelectorAll('.discover-join-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var groupId = this.dataset.groupId;
+            this.disabled = true;
+            this.textContent = '\u2026';
+            var self = this;
+            ajaxPost('/api/groups/' + groupId + '/join').then(function(data) {
+                if (data.success) {
+                    if (data.status === 'member') {
+                        self.outerHTML = '<span class="text-xs text-gray-400 font-medium flex-shrink-0">Member</span>';
+                    } else {
+                        self.outerHTML = '<span class="text-xs text-maroon-300 font-medium flex-shrink-0">Requested</span>';
+                    }
+                } else {
+                    self.disabled = false;
+                    self.textContent = 'Join';
+                }
+            }).catch(function() {
+                self.disabled = false;
+                self.textContent = 'Join';
+            });
+        });
+    });
+});
+</script>
 {% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Welcome to VEAU{% endblock %}
+
+{% block content %}
+<div class="flex flex-col items-center text-center pt-6">
+    <!-- Welcome -->
+    <div class="w-16 h-16 bg-maroon rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+        <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+    </div>
+    <h1 class="text-2xl font-bold text-gray-900 mb-1">Welcome to VEAU!</h1>
+    <p class="text-gray-500 text-sm mb-8">Here's how it works</p>
+
+    <!-- Steps -->
+    <div class="w-full max-w-xs space-y-4 mb-8 text-left">
+        <!-- Step 1 -->
+        <div class="flex gap-3 items-start">
+            <div class="w-8 h-8 bg-maroon text-white rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold">1</div>
+            <div>
+                <p class="text-sm font-semibold text-gray-800">Start a session</p>
+                <p class="text-xs text-gray-400 mt-0.5">Tap the + button to start. Add biers, VDLs, or try challenges.</p>
+            </div>
+        </div>
+        <!-- Step 2 -->
+        <div class="flex gap-3 items-start">
+            <div class="w-8 h-8 bg-maroon text-white rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold">2</div>
+            <div>
+                <p class="text-sm font-semibold text-gray-800">Time your bier</p>
+                <p class="text-xs text-gray-400 mt-0.5">Tap to start, tap to stop. Your time is recorded to the millisecond.</p>
+            </div>
+        </div>
+        <!-- Step 3 -->
+        <div class="flex gap-3 items-start">
+            <div class="w-8 h-8 bg-maroon text-white rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold">3</div>
+            <div>
+                <p class="text-sm font-semibold text-gray-800">Share & compete</p>
+                <p class="text-xs text-gray-400 mt-0.5">Post your sessions, connect with friends, and climb the leaderboards.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="w-full max-w-xs space-y-3">
+        <a href="{{ url_for('search.index') }}"
+           class="block w-full bg-maroon text-white py-3 rounded-xl font-semibold text-center shadow-md">
+            Find Friends
+        </a>
+        <a href="{{ url_for('posts.create') }}"
+           class="block w-full bg-white text-maroon py-3 rounded-xl font-semibold text-center border-2 border-maroon">
+            Start Your First Session
+        </a>
+        <a href="{{ url_for('main.feed') }}"
+           class="block text-gray-400 text-sm font-medium py-2">
+            Skip for now
+        </a>
+    </div>
+</div>
+{% endblock %}

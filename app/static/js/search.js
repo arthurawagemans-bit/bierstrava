@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (s === 'accepted') {
             action = '<span class="text-xs text-gray-400 font-medium flex-shrink-0">Connected</span>';
         } else if (s === 'pending') {
-            action = '<span class="text-xs text-maroon-300 font-medium flex-shrink-0">Pending</span>';
+            action = '<span class="text-xs text-maroon-300 font-medium flex-shrink-0">Requested</span>';
         } else if (s === 'incoming_pending') {
             action = '<button class="connect-btn text-xs bg-maroon text-white px-3.5 py-1.5 rounded-full font-medium flex-shrink-0" data-username="' + esc(u.username) + '">Accept</button>';
         } else {
@@ -208,7 +208,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (data.status === 'accepted') {
                         connectBtn.outerHTML = '<span class="text-xs text-gray-400 font-medium flex-shrink-0">Connected</span>';
                     } else {
-                        connectBtn.outerHTML = '<span class="text-xs text-maroon-300 font-medium flex-shrink-0">Pending</span>';
+                        connectBtn.outerHTML = '<span class="text-xs text-maroon-300 font-medium flex-shrink-0">Requested</span>';
                     }
                 }
             }).catch(function() {
