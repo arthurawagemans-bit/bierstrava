@@ -32,6 +32,33 @@
     </div>
 </div>
 
+<!-- Active Competition Banners -->
+{% for comp in active_competitions %}
+{% set p = comp._my_participant %}
+{% set pct = ((p.beer_count or 0) / comp.target_beers * 100) if p else 0 %}
+<a href="{{ url_for('competitions.detail', id=comp.id) }}"
+   class="block rounded-2xl mb-3 shadow-sm overflow-hidden {{ 'bg-gradient-to-r from-amber-500 to-orange-500' if pct >= 80 else 'bg-gradient-to-r from-maroon to-maroon-700' }}">
+    <div class="px-4 py-3 text-white">
+        <div class="flex items-center justify-between mb-1">
+            <div class="flex items-center gap-2 min-w-0">
+                <span class="text-lg">{{ '🔥' if pct >= 80 else '🏆' }}</span>
+                <div class="min-w-0">
+                    <p class="text-sm font-bold truncate">{{ comp.title }}</p>
+                    <p class="text-[10px] text-white/70">{{ comp.group.name }}</p>
+                </div>
+            </div>
+            <span class="text-xs font-bold flex-shrink-0">{{ (p.beer_count or 0) }}/{{ comp.target_beers }}</span>
+        </div>
+        <div class="h-1.5 bg-white/20 rounded-full overflow-hidden">
+            <div class="h-full bg-white/80 rounded-full transition-all" style="width: {{ [pct, 100]|min }}%"></div>
+        </div>
+        {% if pct >= 80 %}
+        <p class="text-[10px] text-white/80 mt-1 font-medium">Bijna klaar! Nog {{ comp.target_beers - (p.beer_count or 0) }} bieren te gaan</p>
+        {% endif %}
+    </div>
+</a>
+{% endfor %}
+
 <!-- WhatsApp Invite Banner -->
 <a href="https://wa.me/?text={{ ('🍺 Kom ook op VEAU! Track je biertjes, race tegen je vrienden en word de snelste zuiper.\n\nDownload hier: ' ~ url_for('main.feed', _external=True))|urlencode }}"
    target="_blank" rel="noopener"

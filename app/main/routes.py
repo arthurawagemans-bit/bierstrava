@@ -3,7 +3,8 @@ from flask_login import login_required, current_user
 from sqlalchemy.orm import joinedload, subqueryload
 from . import bp
 from ..models import (BeerPost, BeerPostGroup, Connection, GroupMember,
-                      Like, Comment, DrinkingSession, SessionBeer, User)
+                      Like, Comment, DrinkingSession, SessionBeer, User,
+                      Competition, CompetitionParticipant)
 from ..extensions import db
 
 
@@ -33,8 +34,35 @@ def feed():
             User.id != current_user.id
         ).order_by(User.created_at.desc()).limit(8).all()
 
+    # Active competitions in user's groups
+    my_group_ids_list = [m.group_id for m in GroupMember.query.filter_by(user_id=current_user.id).all()]
+    active_competitions = []
+    if my_group_ids_list:
+        active_competitions = Competition.query.filter(
+            Competition.group_id.in_(my_group_ids_list),
+            Competition.status == 'active'
+        ).order_by(Competition.created_at.desc()).all()
+
+        # Auto-join user to any competition they're not in yet
+        for comp in active_competitions:
+            if not CompetitionParticipant.query.filter_by(
+                competition_id=comp.id, user_id=current_user.id
+            ).first():
+                db.session.add(CompetitionParticipant(
+                    competition_id=comp.id, user_id=current_user.id
+                ))
+        db.session.commit()
+
+        # Attach participant info for progress display
+        for comp in active_competitions:
+            comp._my_participant = CompetitionParticipant.query.filter_by(
+                competition_id=comp.id, user_id=current_user.id
+            ).first()
+
     return render_template('main/feed.html', posts=posts,
-                           suggested_users=suggested_users, active_nav='feed')
+                           suggested_users=suggested_users,
+                           active_competitions=active_competitions,
+                           active_nav='feed')
 
 
 def get_feed_posts(user, page=1, per_page=20):
