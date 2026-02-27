@@ -9,7 +9,7 @@ from wtforms.widgets import CheckboxInput, ListWidget
 class BeerPostForm(FlaskForm):
     drink_time_seconds = FloatField('Time (seconds)', validators=[
         Optional(),
-        NumberRange(min=0.1, max=3600, message='Time must be between 0.1 and 3600 seconds.')
+        NumberRange(min=0.1, message='Tijd moet minstens 0.1 seconden zijn.')
     ])
     is_vdl = HiddenField('VDL', default='')
     beer_count = IntegerField('Beer Count', validators=[Optional(), NumberRange(min=1, max=24)], default=1)

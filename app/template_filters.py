@@ -26,6 +26,15 @@ def timeago(dt):
 def format_time(seconds):
     if seconds is None:
         return '--'
+    if seconds >= 3600:
+        h = int(seconds // 3600)
+        m = int((seconds % 3600) // 60)
+        s = seconds % 60
+        return f'{h}:{m:02d}:{s:06.3f}'
+    elif seconds >= 60:
+        m = int(seconds // 60)
+        s = seconds % 60
+        return f'{m}:{s:06.3f}'
     return f'{seconds:.3f}s'
 
 

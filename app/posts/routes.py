@@ -569,10 +569,10 @@ def edit_time(id):
 
     try:
         new_time = float(new_time_str)
-        if new_time < 0.1 or new_time > 3600:
+        if new_time < 0.1:
             raise ValueError
     except (TypeError, ValueError):
-        return jsonify({'error': 'Ongeldige tijd (0.1 - 3600s)'}), 400
+        return jsonify({'error': 'Ongeldige tijd (min 0.1s)'}), 400
 
     if session_beer_id:
         # Edit a specific session beer time
