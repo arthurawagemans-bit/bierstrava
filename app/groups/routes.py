@@ -135,42 +135,6 @@ def detail(id):
         db.desc(db.func.count(month_posts.c.post_id)),
     ).all()
 
-    # 3) Fastest average — avg(drink_time), ASC, NULLs last
-    lb_average = base.outerjoin(
-        group_posts, group_posts.c.user_id == User.id
-    ).add_columns(
-        db.func.avg(group_posts.c.drink_time_seconds).label('metric'),
-        db.func.count(group_posts.c.post_id).label('total_beers'),
-        db.func.max(group_posts.c.created_at).label('last_active'),
-    ).group_by(User.id).order_by(
-        db.case((db.func.avg(group_posts.c.drink_time_seconds).is_(None), 1), else_=0),
-        db.asc(db.func.avg(group_posts.c.drink_time_seconds))
-    ).all()
-
-    # 4) This Week — count(posts) where created_at >= Monday, DESC
-    today = datetime.utcnow()
-    week_start = (today - timedelta(days=today.weekday())).replace(
-        hour=0, minute=0, second=0, microsecond=0
-    )
-    week_posts = db.session.query(
-        BeerPost.id.label('post_id'),
-        BeerPost.user_id,
-        BeerPost.created_at,
-    ).join(BeerPostGroup, BeerPostGroup.post_id == BeerPost.id).filter(
-        BeerPostGroup.group_id == group.id,
-        BeerPost.created_at >= week_start,
-    ).subquery()
-
-    lb_week = base.outerjoin(
-        week_posts, week_posts.c.user_id == User.id
-    ).add_columns(
-        db.func.count(week_posts.c.post_id).label('metric'),
-        db.func.count(week_posts.c.post_id).label('total_beers'),
-        db.func.max(week_posts.c.created_at).label('last_active'),
-    ).group_by(User.id).order_by(
-        db.desc(db.func.count(week_posts.c.post_id)),
-    ).all()
-
     # Group record: fastest single time across all group posts
     group_record = db.session.query(
         BeerPost.drink_time_seconds,
@@ -211,8 +175,6 @@ def detail(id):
                            pending_count=pending_count,
                            lb_fastest=lb_fastest,
                            lb_month=lb_month,
-                           lb_average=lb_average,
-                           lb_week=lb_week,
                            group_record=group_record,
                            active_competition=active_competition,
                            latest_completed_competition=latest_completed_competition)

@@ -1,5 +1,42 @@
 // VEAU - Global JavaScript
 
+// ── Global Modal System ──
+var _veauModalResolve = null;
+
+window.veauConfirm = function(msg, okLabel) {
+    return new Promise(function(resolve) {
+        _veauModalResolve = resolve;
+        var modal = document.getElementById('veau-modal');
+        var msgEl = document.getElementById('veau-modal-msg');
+        var okBtn = document.getElementById('veau-modal-ok');
+        msgEl.textContent = msg;
+        okBtn.textContent = okLabel || 'Verwijderen';
+        modal.classList.remove('hidden');
+        okBtn.onclick = function() {
+            modal.classList.add('hidden');
+            _veauModalResolve = null;
+            resolve(true);
+        };
+    });
+};
+
+window.veauModalCancel = function() {
+    var modal = document.getElementById('veau-modal');
+    modal.classList.add('hidden');
+    if (_veauModalResolve) {
+        _veauModalResolve(false);
+        _veauModalResolve = null;
+    }
+};
+
+window.veauAlert = function(msg) {
+    var toast = document.createElement('div');
+    toast.textContent = msg;
+    toast.className = 'fixed top-4 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-base px-5 py-3 rounded-xl shadow-lg z-[80] max-w-[90vw] text-center';
+    document.body.appendChild(toast);
+    setTimeout(function() { toast.remove(); }, 3000);
+};
+
 document.addEventListener('DOMContentLoaded', function() {
     // Auto-dismiss flash messages
     setTimeout(function() {
@@ -29,6 +66,34 @@ document.addEventListener('DOMContentLoaded', function() {
             return response.json();
         });
     };
+
+    // ── Delegated confirm handler for forms with data-confirm ──
+    document.addEventListener('submit', function(e) {
+        var form = e.target;
+        var confirmMsg = form.dataset.confirm;
+        if (confirmMsg && !form.dataset.confirmed) {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            veauConfirm(confirmMsg, form.dataset.confirmOk || 'Verwijderen').then(function(ok) {
+                if (ok) {
+                    form.dataset.confirmed = 'true';
+                    form.requestSubmit();
+                }
+            });
+            return;
+        }
+        // Prevent double form submissions (existing logic)
+        if (form.dataset.submitted) {
+            e.preventDefault();
+            return;
+        }
+        form.dataset.submitted = 'true';
+        var btn = form.querySelector('button[type="submit"]');
+        if (btn) {
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+        }
+    });
 
     // Like button handler (delegated)
     document.addEventListener('click', function(e) {
@@ -101,13 +166,33 @@ document.addEventListener('DOMContentLoaded', function() {
             navigator.share({ title: 'VEAU', text: text, url: url }).catch(function() {});
         } else {
             navigator.clipboard.writeText(url).then(function() {
-                // Show brief toast
-                var toast = document.createElement('div');
-                toast.textContent = 'Link gekopieerd!';
-                toast.className = 'fixed top-4 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-sm px-4 py-2 rounded-xl shadow-lg z-[70]';
-                document.body.appendChild(toast);
-                setTimeout(function() { toast.remove(); }, 2000);
+                veauAlert('Link gekopieerd!');
             }).catch(function() {});
+        }
+    });
+
+    // WhatsApp share handler (posts + group invites)
+    document.addEventListener('click', function(e) {
+        var btn = e.target.closest('.wa-share-btn');
+        if (btn) {
+            e.preventDefault();
+            var time = btn.dataset.postTime;
+            var user = btn.dataset.postUser;
+            var url = btn.dataset.postUrl;
+            var msg = time
+                ? user + ' dronk ' + time + ' op VEAU! Kun jij dat verslaan? 🍺\n' + url
+                : 'Check dit bericht op VEAU! 🍺\n' + url;
+            window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+            return;
+        }
+        var groupBtn = e.target.closest('#wa-group-btn');
+        if (groupBtn) {
+            e.preventDefault();
+            var name = groupBtn.dataset.groupName;
+            var inviteUrl = groupBtn.dataset.inviteUrl;
+            var groupMsg = 'Doe mee met ' + name + ' op VEAU! 🍺\n' + inviteUrl;
+            window.open('https://wa.me/?text=' + encodeURIComponent(groupMsg), '_blank');
+            return;
         }
     });
 
@@ -131,21 +216,6 @@ document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.post-menu-dropdown').forEach(function(d) {
                 d.classList.add('hidden');
             });
-        }
-    });
-
-    // Prevent double form submissions
-    document.addEventListener('submit', function(e) {
-        var form = e.target;
-        if (form.dataset.submitted) {
-            e.preventDefault();
-            return;
-        }
-        form.dataset.submitted = 'true';
-        var btn = form.querySelector('button[type="submit"]');
-        if (btn) {
-            btn.disabled = true;
-            btn.style.opacity = '0.6';
         }
     });
 

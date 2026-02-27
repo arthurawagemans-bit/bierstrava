@@ -13,7 +13,8 @@ from . import bp
 from ..extensions import db, limiter, cache
 from ..models import (BeerPost, Like, Comment, Reaction, ALLOWED_REACTIONS,
                       User, Group, Tag, Connection, GroupMember, GroupJoinRequest,
-                      CompetitionBeer, CompetitionParticipant)
+                      CompetitionBeer, CompetitionParticipant, Notification)
+from ..services.notifications import notify
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,7 @@ def toggle_like(id):
     else:
         like = Like(user_id=current_user.id, post_id=post.id)
         db.session.add(like)
+        notify(post.user_id, current_user.id, 'like', post.id)
         db.session.commit()
         count = Like.query.filter_by(post_id=post.id).count()
         return jsonify(success=True, liked=True, count=count)
@@ -63,6 +65,7 @@ def toggle_reaction(id):
     else:
         reaction = Reaction(user_id=current_user.id, post_id=post.id, emoji=emoji)
         db.session.add(reaction)
+        notify(post.user_id, current_user.id, 'reaction', post.id)
         try:
             db.session.commit()
         except IntegrityError:
@@ -88,6 +91,7 @@ def add_comment(id):
 
     comment = Comment(user_id=current_user.id, post_id=post.id, body=body)
     db.session.add(comment)
+    notify(post.user_id, current_user.id, 'comment', post.id)
     db.session.commit()
 
     count = Comment.query.filter_by(post_id=post.id).count()

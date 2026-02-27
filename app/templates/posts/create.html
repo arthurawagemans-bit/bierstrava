@@ -44,13 +44,13 @@
     {{ form.hidden_tag() }}
     <input type="hidden" name="session_beers_json" id="session-beers-input" value="[]">
 
-    <div id="session-section">
+    <div id="session-section" class="pb-24">
 
         <!-- Session header -->
         <div class="bg-white rounded-2xl border border-gray-100 p-4 mb-5">
             <div class="flex items-center justify-between mb-3">
                 <h2 class="text-lg font-bold text-gray-900">Sessie</h2>
-                <span id="session-beer-count" class="text-sm text-gray-400">0 bieren</span>
+                <span id="session-beer-count" class="text-base text-gray-400">0 bieren</span>
             </div>
             <div id="session-beer-list">
                 <!-- Filled by JS -->
@@ -70,8 +70,13 @@
                 </button>
             </div>
             <div id="session-challenges">
-                <p class="text-xs text-gray-400 mb-3 text-center">Challenges</p>
-                <div class="space-y-3">
+                <button type="button" id="challenges-toggle" class="w-full flex items-center justify-center gap-2 text-sm font-semibold text-gray-500 mb-3 py-3 rounded-xl border border-gray-200 bg-white active:bg-gray-50 transition-colors">
+                    <span>Challenges</span>
+                    <svg class="w-3.5 h-3.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+                <div id="challenges-list" class="hidden space-y-3">
                     <button type="button" class="session-challenge-btn w-full bg-blue-50 text-blue-700 py-3.5 rounded-xl font-semibold transition-colors text-base" data-beers="2">
                         1 + 1 = Spies
                     </button>
@@ -147,7 +152,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                               d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/>
                     </svg>
-                    <p class="text-sm text-gray-400">Tik om een foto toe te voegen</p>
+                    <p class="text-base text-gray-400">Tik om een foto toe te voegen</p>
                 </div>
                 <img id="session-photo-preview" src="" alt="Preview" class="w-full aspect-[4/3] object-cover hidden">
             </div>
@@ -161,21 +166,29 @@
                       rows="2" placeholder="Hoe was de sessie? @ om mensen, groepen of meer te taggen" maxlength="500"></textarea>
         </div>
 
-        <!-- Share photo with -->
+        <!-- Share photo with (collapsible) -->
         <div class="mb-5">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Deel foto met</label>
-            <p class="text-xs text-gray-400 mb-2">Tijd en bijschrift zijn altijd zichtbaar voor connecties</p>
-            <div class="space-y-2">
+            <div id="share-summary" class="flex items-center justify-between bg-white rounded-xl px-4 py-3 border border-gray-100 cursor-pointer">
+                <div>
+                    <span class="text-sm font-medium text-gray-700">Delen met</span>
+                    <p id="share-summary-text" class="text-xs text-gray-400 mt-0.5">Laden...</p>
+                </div>
+                <svg class="w-4 h-4 text-gray-300 share-chevron transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </div>
+            <div id="share-options" class="hidden mt-2 space-y-2">
+                <p class="text-xs text-gray-400 mb-1">Tijd en bijschrift zijn altijd zichtbaar voor connecties</p>
                 <label class="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-gray-100 cursor-pointer">
                     <input type="checkbox" name="is_public" value="y"
-                           class="w-4 h-4 rounded border-gray-300 text-maroon focus:ring-maroon"
+                           class="w-5 h-5 rounded border-gray-300 text-maroon focus:ring-maroon"
                            {{ 'checked' if last_public }}>
                     <span class="text-sm text-gray-700">Je connecties</span>
                 </label>
                 {% for value, label in form.groups.choices %}
                 <label class="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-gray-100 cursor-pointer">
                     <input type="checkbox" name="groups" value="{{ value }}"
-                           class="w-4 h-4 rounded border-gray-300 text-maroon focus:ring-maroon"
+                           class="w-5 h-5 rounded border-gray-300 text-maroon focus:ring-maroon"
                            {{ 'checked' if value in last_group_ids }}>
                     <span class="text-sm text-gray-700">{{ label }}</span>
                 </label>
@@ -183,11 +196,16 @@
             </div>
         </div>
 
-        <!-- Post button -->
-        <button type="submit" id="direct-post-btn"
-                class="w-full bg-maroon text-white py-4 rounded-xl font-bold hover:bg-maroon-700 transition-colors shadow-md text-lg mb-4">
-            Posten
-        </button>
+    </div>
+
+    <!-- Sticky post banner — fixed above bottom nav -->
+    <div class="fixed bottom-[72px] left-0 right-0 z-40 bg-white border-t border-gray-100 safe-area-bottom">
+        <div class="max-w-lg mx-auto px-4 py-3">
+            <button type="submit" id="direct-post-btn"
+                    class="w-full bg-maroon text-white py-4 rounded-xl font-bold hover:bg-maroon-700 transition-colors shadow-md text-lg">
+                Posten
+            </button>
+        </div>
     </div>
 
 </form>

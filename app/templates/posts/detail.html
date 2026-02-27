@@ -19,7 +19,7 @@
             </svg>
         </a>
         <form method="POST" action="{{ url_for('posts.delete', id=post.id) }}"
-              onsubmit="return confirm('Dit bericht verwijderen?')">
+              data-confirm="Dit bericht verwijderen?">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="text-red-400 hover:text-red-600 p-1">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -307,13 +307,13 @@ function saveTime() {
         if (data.success) {
             location.reload();
         } else {
-            alert(data.error || 'Er ging iets mis');
+            veauAlert(data.error || 'Er ging iets mis');
             btn.disabled = false;
             btn.textContent = 'Opslaan';
         }
     })
     .catch(function() {
-        alert('Er ging iets mis');
+        veauAlert('Er ging iets mis');
         btn.disabled = false;
         btn.textContent = 'Opslaan';
     });

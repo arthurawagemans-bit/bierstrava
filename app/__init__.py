@@ -52,6 +52,7 @@ def create_app(config_class=Config):
     from .settings import bp as settings_bp
     from .api import bp as api_bp
     from .competitions import bp as competitions_bp
+    from .notifications import bp as notifications_bp
 
     app.register_blueprint(auth_bp, url_prefix='/auth')
     app.register_blueprint(main_bp)
@@ -63,6 +64,7 @@ def create_app(config_class=Config):
     app.register_blueprint(settings_bp, url_prefix='/settings')
     app.register_blueprint(api_bp, url_prefix='/api')
     app.register_blueprint(competitions_bp, url_prefix='/competities')
+    app.register_blueprint(notifications_bp, url_prefix='/notifications')
 
     # ── Template filters ─────────────────────────────────
     from .template_filters import timeago, format_time, render_mentions
@@ -84,16 +86,21 @@ def create_app(config_class=Config):
             return _url_for('uploaded_file', filename=filename)
         return ''
 
-    # ── Context processor (cached notification count) ────
+    # ── Context processor (cached notification counts) ────
     @app.context_processor
     def inject_notifications():
         from flask_login import current_user as cu
         if cu.is_authenticated:
-            cache_key = f'notif_count:{cu.id}'
-            count = cache.get(cache_key)
-            if count is None:
+            # Unified notification count (likes, comments, reactions, connections)
+            from .services.notifications import get_unread_count
+            notification_count = get_unread_count(cu.id)
+
+            # Group admin join request count (separate, shown on groups nav icon)
+            group_cache_key = f'group_notif_count:{cu.id}'
+            group_count = cache.get(group_cache_key)
+            if group_count is None:
                 from .models import GroupMember, GroupJoinRequest
-                count = db.session.query(db.func.count(GroupJoinRequest.id)).join(
+                group_count = db.session.query(db.func.count(GroupJoinRequest.id)).join(
                     GroupMember,
                     db.and_(
                         GroupMember.group_id == GroupJoinRequest.group_id,
@@ -103,9 +110,12 @@ def create_app(config_class=Config):
                 ).filter(
                     GroupJoinRequest.status == 'pending'
                 ).scalar() or 0
-                cache.set(cache_key, count, timeout=60)
-            return {'group_notification_count': count}
-        return {'group_notification_count': 0}
+                cache.set(group_cache_key, group_count, timeout=60)
+            return {
+                'notification_count': notification_count,
+                'group_notification_count': group_count,
+            }
+        return {'notification_count': 0, 'group_notification_count': 0}
 
     # ── Error handlers ───────────────────────────────────
     @app.errorhandler(404)

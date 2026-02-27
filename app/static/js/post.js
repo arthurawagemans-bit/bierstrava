@@ -106,6 +106,26 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // ── PR Celebration Screen ──
+    function showPrCelebration(time, label, callback) {
+        var overlay = document.createElement('div');
+        overlay.className = 'fixed inset-0 z-[80] flex flex-col items-center justify-center text-white cursor-pointer select-none';
+        overlay.style.background = 'linear-gradient(to bottom, #16a34a, #15803d)';
+        overlay.innerHTML = '<div class="text-center px-6">' +
+            '<p class="text-7xl mb-4">🏆</p>' +
+            '<p class="text-3xl font-bold mb-2">NIEUW PR!!</p>' +
+            '<p class="text-5xl font-bold font-mono mb-2">' + formatMs(time) + 's</p>' +
+            '<p class="text-xl text-white/80">' + (label || 'Bier') + '</p>' +
+            '<p class="text-base text-white/60 mt-8">Tik om door te gaan</p>' +
+            '</div>';
+        document.body.appendChild(overlay);
+        vibrate([100, 50, 100, 50, 200]);
+        overlay.addEventListener('click', function() {
+            overlay.remove();
+            callback();
+        });
+    }
+
     // ── Countdown then Start ──
     function runCountdown() {
         if (countdownActive) return;
@@ -162,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function() {
         timerScreen.classList.add('bg-gray-100');
         timerScreen.classList.remove('bg-gray-50');
 
-        vibrate(50);
+        vibrate([50, 30, 50]);
         tick();
     }
 
@@ -182,23 +202,34 @@ document.addEventListener('DOMContentLoaded', function() {
         timerScreen.classList.remove('bg-gray-100');
         timerScreen.classList.add('bg-gray-50');
 
-        vibrate([50, 30, 50]);
+        vibrate([80, 40, 80, 40, 80]);
 
         // Add entry to session after short delay
         setTimeout(function() {
             var pbRank = getPbRank(elapsed, pendingLabel);
+            var capturedElapsed = elapsed;
+            var capturedLabel = pendingLabel;
+            var capturedCount = pendingBeerCount;
+
             sessionBeers.push({
-                time: elapsed,
+                time: capturedElapsed,
                 is_vdl: false,
-                beer_count: pendingBeerCount,
-                label: pendingLabel,
+                beer_count: capturedCount,
+                label: capturedLabel,
                 note: '',
                 pb_rank: pbRank
             });
             // Reset pending
             pendingBeerCount = 1;
             pendingLabel = null;
-            showSessionForm();
+
+            if (pbRank === 1) {
+                showPrCelebration(capturedElapsed, capturedLabel, function() {
+                    showSessionForm();
+                });
+            } else {
+                showSessionForm();
+            }
         }, 500);
     }
 
@@ -406,13 +437,55 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+    // ── Challenge collapse toggle ──
+    var challengesToggle = document.getElementById('challenges-toggle');
+    var challengesList = document.getElementById('challenges-list');
+    if (challengesToggle && challengesList) {
+        challengesToggle.addEventListener('click', function() {
+            challengesList.classList.toggle('hidden');
+            var chevron = challengesToggle.querySelector('svg');
+            if (chevron) {
+                chevron.style.transform = challengesList.classList.contains('hidden') ? '' : 'rotate(180deg)';
+            }
+        });
+    }
+
+    // ── Share section collapse toggle ──
+    var shareSummary = document.getElementById('share-summary');
+    var shareOptions = document.getElementById('share-options');
+    if (shareSummary && shareOptions) {
+        function updateShareSummary() {
+            var checked = [];
+            shareOptions.querySelectorAll('input[type="checkbox"]:checked').forEach(function(cb) {
+                var label = cb.closest('label');
+                if (label) {
+                    var span = label.querySelector('span');
+                    if (span) checked.push(span.textContent.trim());
+                }
+            });
+            var summaryText = document.getElementById('share-summary-text');
+            if (summaryText) {
+                summaryText.textContent = checked.length > 0 ? checked.join(', ') : 'Niemand';
+            }
+        }
+        updateShareSummary();
+        shareSummary.addEventListener('click', function() {
+            shareOptions.classList.toggle('hidden');
+            var chevron = shareSummary.querySelector('.share-chevron');
+            if (chevron) {
+                chevron.style.transform = shareOptions.classList.contains('hidden') ? '' : 'rotate(180deg)';
+            }
+        });
+        shareOptions.addEventListener('change', updateShareSummary);
+    }
+
     // ── Post button (validates + syncs data) ──
     var directPostBtn = document.getElementById('direct-post-btn');
     if (directPostBtn) {
         directPostBtn.addEventListener('click', function(e) {
             if (sessionBeers.length < 1) {
                 e.preventDefault();
-                alert('Voeg eerst minstens één bier aan je sessie toe.');
+                veauAlert('Voeg eerst minstens één bier aan je sessie toe.');
                 return;
             }
             // Sync session data before submit

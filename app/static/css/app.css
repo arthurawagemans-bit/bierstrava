@@ -1,5 +1,21 @@
 /* BierStrava Custom Styles */
 
+/* ── Drunk-proof base sizes ── */
+body { font-size: 16px; }
+
+/* Override tiny Tailwind text classes globally */
+.text-\[10px\] { font-size: 12px !important; }
+.text-\[11px\] { font-size: 13px !important; }
+
+/* Modal slide-up animation */
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+.animate-slide-up {
+    animation: slideUp 0.25s ease-out;
+}
+
 /* Safe area padding for phones with home indicator */
 .safe-area-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0);

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Meldingen - VEAU{% endblock %}
+
+{% block content %}
+<div class="flex items-center gap-3 mb-4">
+    <h1 class="text-xl font-bold">Meldingen</h1>
+</div>
+
+{% if notifications %}
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="divide-y divide-gray-50">
+        {% for n in notifications %}
+        <a href="{{ url_for('posts.detail', id=n.post_id) if n.post_id else url_for('profiles.connection_requests') }}"
+           class="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-gray-50 {{ 'bg-maroon-50/40' if not n.is_read else '' }}">
+            {% if n.actor.avatar_filename %}
+            <img src="{{ upload_url(n.actor.avatar_filename) }}"
+                 class="w-10 h-10 rounded-full object-cover flex-shrink-0">
+            {% else %}
+            <div class="w-10 h-10 rounded-full bg-maroon-100 flex items-center justify-center flex-shrink-0">
+                <span class="text-maroon font-bold text-sm">{{ n.actor.display_name[0]|upper }}</span>
+            </div>
+            {% endif %}
+            <div class="flex-1 min-w-0">
+                <p class="text-sm text-gray-900">
+                    <span class="font-semibold">{{ n.actor.display_name }}</span>
+                    {% if n.type == 'like' %}
+                    vond je bericht leuk ❤️
+                    {% elif n.type == 'comment' %}
+                    reageerde op je bericht 💬
+                    {% elif n.type == 'reaction' %}
+                    reageerde op je bericht
+                    {% elif n.type == 'connection_request' %}
+                    wil met je connecten 👋
+                    {% elif n.type == 'connection_accepted' %}
+                    heeft je verzoek geaccepteerd ✅
+                    {% endif %}
+                </p>
+                <p class="text-xs text-gray-400 mt-0.5">{{ n.created_at|timeago }}</p>
+            </div>
+            {% if not n.is_read %}
+            <div class="w-2.5 h-2.5 rounded-full bg-maroon flex-shrink-0"></div>
+            {% endif %}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% else %}
+<div class="text-center py-16">
+    <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+    </svg>
+    <p class="text-sm text-gray-400">Geen meldingen</p>
+</div>
+{% endif %}
+{% endblock %}

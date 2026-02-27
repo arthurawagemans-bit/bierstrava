@@ -230,13 +230,13 @@ function saveSessionTime() {
             btn.disabled = false;
             btn.textContent = 'Opslaan';
         } else {
-            alert(data.error || 'Er ging iets mis');
+            veauAlert(data.error || 'Er ging iets mis');
             btn.disabled = false;
             btn.textContent = 'Opslaan';
         }
     })
     .catch(function() {
-        alert('Er ging iets mis');
+        veauAlert('Er ging iets mis');
         btn.disabled = false;
         btn.textContent = 'Opslaan';
     });

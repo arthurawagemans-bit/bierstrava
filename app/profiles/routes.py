@@ -9,6 +9,7 @@ from ..models import (User, Connection, BeerPost, SessionBeer, DrinkingSession,
 from .forms import EditProfileForm
 from ..posts.utils import process_upload
 from ..services.stats import calculate_max_streak, get_user_achievement_stats
+from ..services.notifications import notify
 from datetime import datetime, date as dt_date, timedelta
 
 
@@ -224,6 +225,7 @@ def connect(username):
         status='pending'
     )
     db.session.add(conn)
+    notify(user.id, current_user.id, 'connection_request')
     db.session.commit()
 
     flash('Connectieverzoek verstuurd!', 'success')
@@ -286,6 +288,7 @@ def accept_request(id):
     else:
         reverse.status = 'accepted'
 
+    notify(conn.follower_id, current_user.id, 'connection_accepted')
     db.session.commit()
     flash('Connectieverzoek geaccepteerd!', 'success')
     return redirect(url_for('profiles.connection_requests'))

@@ -36,7 +36,7 @@
         </div>
         {% if m.user.id != current_user.id %}
         <form method="POST" action="{{ url_for('groups.remove_member', id=group.id, user_id=m.user.id) }}"
-              onsubmit="return confirm('Dit lid verwijderen?')">
+              data-confirm="Dit lid verwijderen?">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button class="text-red-400 hover:text-red-600 text-xs font-medium">Verwijderen</button>
         </form>
@@ -48,7 +48,7 @@
 <!-- Delete Group -->
 <div class="mt-8 pt-6 border-t border-gray-200">
     <form method="POST" action="{{ url_for('groups.delete', id=group.id) }}"
-          onsubmit="return confirm('Deze groep permanent verwijderen? Dit kan niet ongedaan worden.')">
+          data-confirm="Deze groep permanent verwijderen? Dit kan niet ongedaan worden.">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button class="w-full bg-red-50 text-red-600 py-3 rounded-xl text-sm font-medium hover:bg-red-100 transition-colors">
             Groep Verwijderen
