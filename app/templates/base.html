@@ -73,17 +73,17 @@
     {% set active_nav = active_nav|default('') %}
     <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 safe-area-bottom">
         <div class="max-w-lg mx-auto flex items-center h-[72px]">
-            <a href="{{ url_for('main.feed') }}" class="flex-1 flex flex-col items-center justify-center gap-0.5 py-3 {{ 'text-maroon' if active_nav == 'feed' else 'text-gray-400' }}">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <a href="{{ url_for('main.feed') }}" class="flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[56px] {{ 'text-maroon' if active_nav == 'feed' else 'text-gray-400' }}">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                 </svg>
-                <span class="text-[10px] font-medium">Home</span>
+                <span class="text-xs font-medium">Home</span>
             </a>
-            <a href="{{ url_for('leaderboard.index') }}" class="flex-1 flex flex-col items-center justify-center gap-0.5 py-3 {{ 'text-maroon' if active_nav == 'leaderboard' else 'text-gray-400' }}">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <a href="{{ url_for('leaderboard.index') }}" class="flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[56px] {{ 'text-maroon' if active_nav == 'leaderboard' else 'text-gray-400' }}">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
                 </svg>
-                <span class="text-[10px] font-medium">Ranglijst</span>
+                <span class="text-xs font-medium">Ranglijst</span>
             </a>
             <a id="nav-create-btn" href="{{ url_for('posts.create') }}" class="flex flex-col items-center justify-center px-3 -mt-5">
                 <div class="bg-maroon text-white rounded-full w-14 h-14 flex items-center justify-center shadow-lg hover:bg-maroon-700 transition-colors">
@@ -92,22 +92,22 @@
                     </svg>
                 </div>
             </a>
-            <a href="{{ url_for('groups.list_groups') }}" class="flex-1 flex flex-col items-center justify-center gap-0.5 py-3 {{ 'text-maroon' if active_nav == 'groups' else 'text-gray-400' }}">
+            <a href="{{ url_for('groups.list_groups') }}" class="flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[56px] {{ 'text-maroon' if active_nav == 'groups' else 'text-gray-400' }}">
                 <div class="relative">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
                     </svg>
                     {% if group_notification_count %}
                     <span class="absolute -top-1.5 -right-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1">{{ group_notification_count }}</span>
                     {% endif %}
                 </div>
-                <span class="text-[10px] font-medium">Groepen</span>
+                <span class="text-xs font-medium">Groepen</span>
             </a>
-            <a href="{{ url_for('profiles.view', username=current_user.username) }}" class="flex-1 flex flex-col items-center justify-center gap-0.5 py-3 {{ 'text-maroon' if active_nav == 'profile' else 'text-gray-400' }}">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <a href="{{ url_for('profiles.view', username=current_user.username) }}" class="flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[56px] {{ 'text-maroon' if active_nav == 'profile' else 'text-gray-400' }}">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                 </svg>
-                <span class="text-[10px] font-medium">Profiel</span>
+                <span class="text-xs font-medium">Profiel</span>
             </a>
         </div>
     </nav>

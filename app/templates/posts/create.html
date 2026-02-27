@@ -9,8 +9,8 @@
      class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-50 cursor-pointer select-none hidden"
      style="-webkit-tap-highlight-color: transparent;">
 
-    <!-- Subtle hint at top -->
-    <p id="timer-hint" class="text-sm text-gray-400 mb-auto mt-16 transition-opacity duration-300">
+    <!-- Hint at top -->
+    <p id="timer-hint" class="text-lg font-semibold text-gray-600 mb-auto mt-16 transition-opacity duration-300">
         {{ 'Tap to start countdown' if current_user.countdown_enabled else 'Tap anywhere to start' }}
     </p>
 
@@ -19,9 +19,9 @@
         <div id="stopwatch-display" class="text-8xl font-bold text-maroon font-mono tracking-wide transition-colors duration-300">
             0.000
         </div>
-        <p id="timer-seconds-label" class="text-sm text-gray-400 mt-2">seconden</p>
+        <p id="timer-seconds-label" class="text-base text-gray-500 mt-2">seconden</p>
         {% if personal_best %}
-        <p id="pb-indicator" class="text-xs text-gray-400 mt-4">
+        <p id="pb-indicator" class="text-sm text-gray-500 mt-4">
             PB: <span class="font-bold text-maroon font-mono">{{ personal_best|format_time }}</span>
         </p>
         {% endif %}
@@ -61,11 +61,11 @@
         <div id="session-actions" class="mb-5">
             <div id="session-add-btns" class="flex gap-3 mb-3">
                 <button type="button" id="session-timer-btn"
-                        class="flex-1 bg-maroon text-white py-3 rounded-xl font-semibold text-sm">
+                        class="flex-1 bg-maroon text-white py-5 rounded-xl font-bold text-base">
                     Bier (getimed)
                 </button>
                 <button type="button" id="session-add-vdl-btn"
-                        class="flex-1 bg-amber-100 text-amber-700 py-3 rounded-xl font-semibold text-sm">
+                        class="flex-1 bg-amber-100 text-amber-700 py-5 rounded-xl font-bold text-base">
                     Voor De Lekker
                 </button>
             </div>
@@ -183,96 +183,13 @@
             </div>
         </div>
 
-        <!-- Preview button (replaces direct submit) -->
-        <button type="button" id="preview-session-btn"
-                class="w-full bg-maroon text-white py-3.5 rounded-xl font-semibold hover:bg-maroon-700 transition-colors shadow-md text-base mb-4">
-            Voorbeeld
+        <!-- Post button -->
+        <button type="submit" id="direct-post-btn"
+                class="w-full bg-maroon text-white py-4 rounded-xl font-bold hover:bg-maroon-700 transition-colors shadow-md text-lg mb-4">
+            Posten
         </button>
     </div>
 
-    <!-- ═══════════════════════════════════════════ -->
-    <!-- STEP 3: Preview Screen                      -->
-    <!-- ═══════════════════════════════════════════ -->
-    <div id="preview-section" class="hidden">
-        <div class="flex items-center gap-3 mb-4">
-            <button type="button" id="preview-back-btn" class="text-gray-500">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-                </svg>
-            </button>
-            <h2 class="text-lg font-bold flex-1">Voorbeeld</h2>
-        </div>
-
-        <!-- Post card preview -->
-        <div class="bg-white rounded-2xl shadow-sm mb-4 overflow-hidden border border-gray-100">
-            <!-- Header: avatar + username -->
-            <div class="flex items-center px-4 py-3">
-                <div class="flex-shrink-0">
-                    {% if current_user.avatar_filename %}
-                    <img src="{{ upload_url(current_user.avatar_filename) }}"
-                         class="w-9 h-9 rounded-full object-cover">
-                    {% else %}
-                    <div class="w-9 h-9 rounded-full bg-maroon-100 flex items-center justify-center">
-                        <span class="text-maroon font-bold text-sm">{{ current_user.display_name[0]|upper }}</span>
-                    </div>
-                    {% endif %}
-                </div>
-                <div class="ml-3 flex-1 min-w-0">
-                    <span class="font-semibold text-sm text-gray-900 block">{{ current_user.display_name }}</span>
-                    <p class="text-xs text-gray-400">Zojuist</p>
-                </div>
-            </div>
-
-            <!-- Photo preview -->
-            <div id="preview-photo-container" class="hidden">
-                <img id="preview-photo" src="" class="w-full aspect-[4/3] object-cover">
-            </div>
-
-            <!-- Time bar -->
-            <div id="preview-time-bar" class="px-4 py-2.5 bg-gray-50/80">
-                <!-- Filled by JS -->
-            </div>
-
-            <!-- Caption -->
-            <p id="preview-caption" class="px-4 py-2 text-sm text-gray-700 hidden"></p>
-
-            <!-- Fake actions bar -->
-            <div class="px-4 py-2.5 flex items-center gap-5 border-t border-gray-100">
-                <div class="flex items-center gap-1.5 text-sm text-gray-400">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
-                    </svg>
-                    <span class="font-medium">0</span>
-                </div>
-                <div class="flex items-center gap-1.5 text-sm text-gray-400">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                    </svg>
-                    <span class="font-medium">0</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Sharing info -->
-        <div id="preview-sharing" class="bg-white rounded-xl border border-gray-100 px-4 py-3 mb-5">
-            <p class="text-xs text-gray-400 mb-1">Gedeeld met</p>
-            <p id="preview-share-list" class="text-sm text-gray-600"></p>
-        </div>
-
-        <!-- Actions -->
-        <div class="flex gap-3 mb-4">
-            <button type="button" id="preview-edit-btn"
-                    class="flex-1 bg-gray-100 text-gray-700 py-3.5 rounded-xl font-semibold text-base">
-                Bewerken
-            </button>
-            <button type="submit"
-                    class="flex-1 bg-maroon text-white py-3.5 rounded-xl font-semibold text-base shadow-md">
-                Posten
-            </button>
-        </div>
-    </div>
 </form>
 {% endblock %}
 

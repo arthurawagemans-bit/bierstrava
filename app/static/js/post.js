@@ -224,8 +224,6 @@ document.addEventListener('DOMContentLoaded', function() {
         timerScreen.classList.add('hidden');
         if (postSection) postSection.classList.add('hidden');
         if (sessionSection) sessionSection.classList.add('hidden');
-        var preview = document.getElementById('preview-section');
-        if (preview) preview.classList.add('hidden');
     }
 
     // ── Show Timer Screen ──
@@ -407,122 +405,20 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // ── Preview ──
-    var previewSection = document.getElementById('preview-section');
-    var previewBtn = document.getElementById('preview-session-btn');
-    var previewBackBtn = document.getElementById('preview-back-btn');
-    var previewEditBtn = document.getElementById('preview-edit-btn');
-
-    function showPreview() {
-        // Sync session data to hidden input before preview
-        if (sessionBeersInput) {
-            sessionBeersInput.value = JSON.stringify(sessionBeers);
-        }
-
-        hideAll();
-        previewSection.classList.remove('hidden');
-        previewSection.style.animation = 'fadeIn 0.3s ease-out';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-
-        // Build time bar
-        var timeBar = document.getElementById('preview-time-bar');
-        var html = '<div class="space-y-1.5">';
-
-        var totalBeers = 0;
-        sessionBeers.forEach(function(beer) {
-            totalBeers += (beer.beer_count || 1);
-            var label = beer.label || 'Bier';
-            html += '<div class="flex items-center justify-between">';
-            html += '<div class="flex items-center gap-1.5 flex-1 min-w-0">';
-            html += '<span class="text-sm font-medium text-gray-700 flex-shrink-0">' + label + '</span>';
-            if (beer.pb_rank === 1) {
-                html += '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-green-100 text-green-700 flex-shrink-0">PR!</span>';
-            } else if (beer.pb_rank === 2) {
-                html += '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-600 flex-shrink-0">2e</span>';
-            } else if (beer.pb_rank === 3) {
-                html += '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-orange-100 text-orange-500 flex-shrink-0">3e</span>';
-            }
-            if (beer.beer_count && beer.beer_count > 1) {
-                html += '<span class="text-[11px] text-gray-400 flex-shrink-0">(' + beer.beer_count + ')</span>';
-            }
-            if (beer.note) {
-                html += '<span class="text-[11px] text-gray-400 truncate">' + escapeHtml(beer.note) + '</span>';
-            }
-            html += '</div>';
-            if (beer.is_vdl) {
-                html += '<span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 flex-shrink-0">VDL</span>';
-            } else if (beer.time !== null) {
-                html += '<span class="time-badge text-xs font-bold px-2.5 py-0.5 rounded-full flex-shrink-0">' + formatMs(beer.time) + 's</span>';
-            }
-            html += '</div>';
-        });
-
-        html += '<div class="flex items-center justify-between pt-1.5 border-t border-gray-200">';
-        html += '<span class="text-xs font-semibold text-gray-500">Sessie totaal</span>';
-        html += '<span class="text-xs font-bold text-maroon">' + totalBeers + ' bier' + (totalBeers !== 1 ? 'en' : '') + '</span>';
-        html += '</div></div>';
-        timeBar.innerHTML = html;
-
-        // Caption
-        var captionEl = document.getElementById('preview-caption');
-        var sessionForm = document.getElementById('session-form');
-        var captionInput = sessionForm.querySelector('textarea[name="caption"]');
-        var captionText = captionInput ? captionInput.value.trim() : '';
-        if (captionText) {
-            captionEl.textContent = captionText;
-            captionEl.classList.remove('hidden');
-        } else {
-            captionEl.classList.add('hidden');
-        }
-
-        // Photo
-        var photoContainer = document.getElementById('preview-photo-container');
-        var previewPhotoImg = document.getElementById('preview-photo');
-        var srcPhoto = document.getElementById('session-photo-preview');
-        if (srcPhoto && !srcPhoto.classList.contains('hidden') && srcPhoto.src) {
-            previewPhotoImg.src = srcPhoto.src;
-            photoContainer.classList.remove('hidden');
-        } else {
-            photoContainer.classList.add('hidden');
-        }
-
-        // Sharing info
-        var shareList = document.getElementById('preview-share-list');
-        var shares = [];
-        var publicCheckbox = sessionForm.querySelector('input[name="is_public"]');
-        if (publicCheckbox && publicCheckbox.checked) {
-            shares.push('Je connecties');
-        }
-        sessionForm.querySelectorAll('input[name="groups"]:checked').forEach(function(cb) {
-            var label = cb.closest('label');
-            if (label) {
-                shares.push(label.querySelector('span').textContent.trim());
-            }
-        });
-        shareList.textContent = shares.length ? shares.join(', ') : 'Niemand (privé)';
-    }
-
-    function escapeHtml(text) {
-        var div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    if (previewBtn) {
-        previewBtn.addEventListener('click', function() {
+    // ── Post button (validates + syncs data) ──
+    var directPostBtn = document.getElementById('direct-post-btn');
+    if (directPostBtn) {
+        directPostBtn.addEventListener('click', function(e) {
             if (sessionBeers.length < 1) {
+                e.preventDefault();
                 alert('Voeg eerst minstens één bier aan je sessie toe.');
                 return;
             }
-            showPreview();
+            // Sync session data before submit
+            if (sessionBeersInput) {
+                sessionBeersInput.value = JSON.stringify(sessionBeers);
+            }
         });
-    }
-
-    if (previewBackBtn) {
-        previewBackBtn.addEventListener('click', showSessionForm);
-    }
-    if (previewEditBtn) {
-        previewEditBtn.addEventListener('click', showSessionForm);
     }
 
     // ── Initial render ──
