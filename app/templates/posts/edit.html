@@ -23,12 +23,29 @@
             <span class="text-amber-700 font-bold text-xl">VDL</span>
         </div>
     </div>
-    {% elif post.session_id %}
+    {% elif post.session_id and post.session %}
     <div class="mb-5">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Tijd</label>
-        <div class="bg-gray-50 rounded-xl border border-gray-200 p-3 text-center">
-            <span class="text-gray-500 text-sm">Sessie bericht — tijden kunnen niet worden bewerkt</span>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Tijden</label>
+        <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            {% for beer in post.session.beers %}
+            <div class="flex items-center justify-between px-4 py-3 {{ 'border-b border-gray-100' if not loop.last }}">
+                <span class="text-sm font-medium text-gray-700">{{ beer.label or 'Bier' }}{% if beer.beer_count and beer.beer_count > 1 %} ({{ beer.beer_count }}){% endif %}</span>
+                {% if beer.is_vdl and beer.drink_time_seconds is none %}
+                <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700">VDL</span>
+                {% elif beer.drink_time_seconds is not none %}
+                <div class="flex items-center gap-1.5">
+                    <span class="session-time-display text-sm font-bold text-maroon font-mono" data-beer-id="{{ beer.id }}">{{ beer.drink_time_seconds|format_time }}</span>
+                    <button type="button" class="edit-session-time-btn text-gray-300 hover:text-maroon p-0.5" data-beer-id="{{ beer.id }}" data-current-time="{{ beer.drink_time_seconds }}">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                        </svg>
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
         </div>
+        <p class="text-xs text-gray-400 mt-1.5">Tik op ✏️ om een tijd aan te passen</p>
     </div>
     {% else %}
     <div class="mb-5">
@@ -118,6 +135,33 @@
 </form>
 {% endblock %}
 
+<!-- Edit Time Modal for session beers -->
+{% if post.session_id %}
+<div id="edit-time-modal" class="fixed inset-0 bg-black/50 z-50 flex items-end justify-center hidden" onclick="closeTimeModal(event)">
+    <div class="bg-white w-full max-w-lg rounded-t-2xl p-5 pb-8" onclick="event.stopPropagation()" style="animation:slide-up .25s ease-out">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-base">Tijd Aanpassen</h3>
+            <button type="button" onclick="closeTimeModal()" class="text-gray-400 hover:text-gray-600 p-1">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        <div class="flex items-center gap-3 mb-4">
+            <input type="number" id="edit-time-input" step="0.001" min="0.1" max="3600" inputmode="decimal"
+                   class="flex-1 text-center text-3xl font-bold text-maroon bg-gray-50 rounded-xl border border-gray-200 py-3 px-4 font-mono focus:ring-2 focus:ring-maroon focus:border-maroon focus:outline-none">
+            <span class="text-gray-400 text-sm">sec</span>
+        </div>
+        <p class="text-xs text-gray-400 mb-4 text-center">Timer te vroeg gestopt? Pas de tijd hier aan.</p>
+        <button type="button" id="save-time-btn" onclick="saveSessionTime()"
+                class="w-full bg-maroon text-white py-3 rounded-xl font-semibold hover:bg-maroon-700 transition-colors">
+            Opslaan
+        </button>
+    </div>
+</div>
+<style>@keyframes slide-up{from{transform:translateY(100%)}to{transform:translateY(0)}}</style>
+{% endif %}
+
 {% block scripts %}
 <script>
 // Photo preview for new upload
@@ -135,5 +179,72 @@ photoInput.addEventListener('change', function() {
         reader.readAsDataURL(this.files[0]);
     }
 });
+
+{% if post.session_id %}
+// Session beer time editing
+var editBeerId = null;
+
+document.querySelectorAll('.edit-session-time-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        editBeerId = this.dataset.beerId;
+        var currentTime = parseFloat(this.dataset.currentTime);
+        document.getElementById('edit-time-input').value = currentTime.toFixed(3);
+        document.getElementById('edit-time-modal').classList.remove('hidden');
+        setTimeout(function() {
+            document.getElementById('edit-time-input').focus();
+            document.getElementById('edit-time-input').select();
+        }, 100);
+    });
+});
+
+function closeTimeModal(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('edit-time-modal').classList.add('hidden');
+}
+
+function saveSessionTime() {
+    var newTime = document.getElementById('edit-time-input').value;
+    var btn = document.getElementById('save-time-btn');
+    btn.disabled = true;
+    btn.textContent = 'Opslaan...';
+
+    fetch('/posts/{{ post.id }}/edit-time', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ new_time: newTime, session_beer_id: editBeerId })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) {
+            // Update display
+            var display = document.querySelector('.session-time-display[data-beer-id="' + editBeerId + '"]');
+            if (display) display.textContent = data.new_time;
+            // Update the edit button's current time
+            var editBtn = document.querySelector('.edit-session-time-btn[data-beer-id="' + editBeerId + '"]');
+            if (editBtn) editBtn.dataset.currentTime = newTime;
+            closeTimeModal();
+            btn.disabled = false;
+            btn.textContent = 'Opslaan';
+        } else {
+            alert(data.error || 'Er ging iets mis');
+            btn.disabled = false;
+            btn.textContent = 'Opslaan';
+        }
+    })
+    .catch(function() {
+        alert('Er ging iets mis');
+        btn.disabled = false;
+        btn.textContent = 'Opslaan';
+    });
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeTimeModal();
+});
+{% endif %}
 </script>
 {% endblock %}

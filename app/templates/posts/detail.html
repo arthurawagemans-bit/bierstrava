@@ -94,7 +94,17 @@
                 {% if beer.is_vdl %}
                 <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700 flex-shrink-0">VDL</span>
                 {% elif beer.drink_time_seconds is not none %}
-                <span class="time-badge text-xs font-bold px-2.5 py-0.5 rounded-full flex-shrink-0">{{ beer.drink_time_seconds|format_time }}</span>
+                <div class="flex items-center gap-1 flex-shrink-0">
+                    <!-- Display mode -->
+                    <span class="time-badge text-xs font-bold px-2.5 py-0.5 rounded-full time-display" data-beer-id="{{ beer.id }}">{{ beer.drink_time_seconds|format_time }}</span>
+                    {% if post.user_id == current_user.id %}
+                    <button class="edit-time-btn text-gray-300 hover:text-maroon p-0.5" data-beer-id="{{ beer.id }}" data-current-time="{{ beer.drink_time_seconds }}" title="Tijd aanpassen">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                        </svg>
+                    </button>
+                    {% endif %}
+                </div>
                 {% endif %}
             </div>
             {% endfor %}
@@ -110,10 +120,17 @@
             </span>
         </div>
         {% else %}
-        <div class="flex items-center justify-center">
-            <span class="time-badge text-base font-bold px-4 py-1.5 rounded-full">
+        <div class="flex items-center justify-center gap-2">
+            <span class="time-badge text-base font-bold px-4 py-1.5 rounded-full time-display" data-simple="true">
                 {{ post.drink_time_seconds|format_time }}
             </span>
+            {% if post.user_id == current_user.id %}
+            <button class="edit-time-btn text-gray-300 hover:text-maroon p-1" data-current-time="{{ post.drink_time_seconds }}" title="Tijd aanpassen">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                </svg>
+            </button>
+            {% endif %}
         </div>
         {% endif %}
     </div>
@@ -205,4 +222,106 @@
         </button>
     </form>
 </div>
+
+<!-- Edit Time Modal -->
+{% if post.user_id == current_user.id %}
+<div id="edit-time-modal" class="fixed inset-0 bg-black/50 z-50 flex items-end justify-center hidden" onclick="closeTimeModal(event)">
+    <div class="bg-white w-full max-w-lg rounded-t-2xl p-5 pb-8 animate-slide-up" onclick="event.stopPropagation()">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-bold text-base">Tijd Aanpassen</h3>
+            <button onclick="closeTimeModal()" class="text-gray-400 hover:text-gray-600 p-1">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        <div class="flex items-center gap-3 mb-4">
+            <input type="number" id="edit-time-input" step="0.001" min="0.1" max="3600"
+                   inputmode="decimal"
+                   class="flex-1 text-center text-3xl font-bold text-maroon bg-gray-50 rounded-xl border border-gray-200 py-3 px-4 font-mono focus:ring-2 focus:ring-maroon focus:border-maroon focus:outline-none">
+            <span class="text-gray-400 text-sm">sec</span>
+        </div>
+        <p class="text-xs text-gray-400 mb-4 text-center">Timer te vroeg gestopt? Pas de tijd hier aan.</p>
+        <button id="save-time-btn" onclick="saveTime()"
+                class="w-full bg-maroon text-white py-3 rounded-xl font-semibold hover:bg-maroon-700 transition-colors">
+            Opslaan
+        </button>
+    </div>
+</div>
+
+<style>
+@keyframes slide-up {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+.animate-slide-up { animation: slide-up 0.25s ease-out; }
+</style>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+{% if post.user_id == current_user.id %}
+<script>
+var editBeerId = null;
+var editPostId = {{ post.id }};
+
+document.querySelectorAll('.edit-time-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        editBeerId = this.dataset.beerId || null;
+        var currentTime = parseFloat(this.dataset.currentTime);
+        document.getElementById('edit-time-input').value = currentTime.toFixed(3);
+        document.getElementById('edit-time-modal').classList.remove('hidden');
+        setTimeout(function() {
+            document.getElementById('edit-time-input').focus();
+            document.getElementById('edit-time-input').select();
+        }, 100);
+    });
+});
+
+function closeTimeModal(e) {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('edit-time-modal').classList.add('hidden');
+}
+
+function saveTime() {
+    var newTime = document.getElementById('edit-time-input').value;
+    var btn = document.getElementById('save-time-btn');
+    btn.disabled = true;
+    btn.textContent = 'Opslaan...';
+
+    var body = { new_time: newTime };
+    if (editBeerId) body.session_beer_id = editBeerId;
+
+    fetch('/posts/' + editPostId + '/edit-time', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify(body)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert(data.error || 'Er ging iets mis');
+            btn.disabled = false;
+            btn.textContent = 'Opslaan';
+        }
+    })
+    .catch(function() {
+        alert('Er ging iets mis');
+        btn.disabled = false;
+        btn.textContent = 'Opslaan';
+    });
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeTimeModal();
+});
+</script>
+{% endif %}
 {% endblock %}

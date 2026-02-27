@@ -26,6 +26,7 @@ def update_privacy():
     if form.validate_on_submit():
         current_user.is_private = form.is_private.data
         current_user.countdown_enabled = form.countdown_enabled.data
+        current_user.hide_own_posts = form.hide_own_posts.data
         db.session.commit()
         flash('Instellingen opgeslagen!', 'success')
     return redirect(url_for('settings.index'))

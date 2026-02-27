@@ -76,17 +76,29 @@ def get_feed_posts(user, page=1, per_page=20):
     )
 
     # Collect deduplicated post IDs first (avoids UNION + joinedload duplication)
+    hide_own = user.hide_own_posts
+
     conn_post_ids = db.session.query(BeerPost.id).filter(
         BeerPost.user_id.in_(connected_ids),
-        BeerPost.user_id != user.id,
     )
+    if hide_own:
+        conn_post_ids = conn_post_ids.filter(BeerPost.user_id != user.id)
 
     group_post_ids = db.session.query(BeerPost.id).join(BeerPostGroup).filter(
         BeerPostGroup.group_id.in_(my_group_ids),
-        BeerPost.user_id != user.id,
     )
+    if hide_own:
+        group_post_ids = group_post_ids.filter(BeerPost.user_id != user.id)
 
-    all_ids = conn_post_ids.union(group_post_ids)
+    # Also include own posts (always visible unless hidden)
+    own_post_ids = db.session.query(BeerPost.id).filter(
+        BeerPost.user_id == user.id
+    ) if not hide_own else None
+
+    if own_post_ids is not None:
+        all_ids = conn_post_ids.union(group_post_ids).union(own_post_ids)
+    else:
+        all_ids = conn_post_ids.union(group_post_ids)
 
     # Fetch posts cleanly with eager loading — no UNION in the ORM query
     combined = BeerPost.query.filter(

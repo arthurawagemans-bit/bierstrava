@@ -67,6 +67,16 @@
                     <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-maroon after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
                 </label>
             </div>
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-700">Eigen Posts Verbergen</p>
+                    <p class="text-xs text-gray-400">Verberg je eigen berichten uit je feed</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    {{ settings_form.hide_own_posts(class="sr-only peer", id="hide-own-toggle") }}
+                    <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:bg-maroon after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></div>
+                </label>
+            </div>
         </div>
         <button type="submit"
                 class="w-full mt-4 bg-gray-100 text-gray-700 py-2 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">

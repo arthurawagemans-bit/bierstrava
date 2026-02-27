@@ -1,6 +1,6 @@
 import re
 import json
-from flask import render_template, redirect, url_for, flash, request, abort, current_app
+from flask import render_template, redirect, url_for, flash, request, abort, current_app, jsonify
 from flask_login import login_required, current_user
 from . import bp
 from ..extensions import db
@@ -525,6 +525,90 @@ def edit(id):
 
     return render_template('posts/edit.html', form=form, post=post,
                            current_group_ids=current_group_ids)
+
+
+def recalculate_pb_ranks(user_id, label):
+    """Recalculate pb_rank for ALL SessionBeers of a user in a given category."""
+    if label is None:
+        label_filter = SessionBeer.label.is_(None)
+    else:
+        label_filter = (SessionBeer.label == label)
+
+    # Get all timed (non-VDL) session beers for this user+category, fastest first
+    all_beers = SessionBeer.query.join(
+        DrinkingSession, DrinkingSession.id == SessionBeer.session_id
+    ).filter(
+        DrinkingSession.user_id == user_id,
+        label_filter,
+        SessionBeer.drink_time_seconds.isnot(None),
+        SessionBeer.is_vdl == False
+    ).order_by(SessionBeer.drink_time_seconds.asc()).all()
+
+    # Reset all ranks first
+    for sb in all_beers:
+        sb.pb_rank = None
+        sb.is_pb = False
+
+    # Assign ranks 1-3
+    for i, sb in enumerate(all_beers[:3]):
+        sb.pb_rank = i + 1
+        if i == 0:
+            sb.is_pb = True
+
+
+@bp.route('/<int:id>/edit-time', methods=['POST'])
+@login_required
+def edit_time(id):
+    post = BeerPost.query.get_or_404(id)
+    if post.user_id != current_user.id:
+        abort(403)
+
+    data = request.get_json() if request.is_json else {}
+    new_time_str = data.get('new_time') or request.form.get('new_time')
+    session_beer_id = data.get('session_beer_id') or request.form.get('session_beer_id')
+
+    try:
+        new_time = float(new_time_str)
+        if new_time < 0.1 or new_time > 3600:
+            raise ValueError
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Ongeldige tijd (0.1 - 3600s)'}), 400
+
+    if session_beer_id:
+        # Edit a specific session beer time
+        session_beer = SessionBeer.query.get_or_404(int(session_beer_id))
+        if session_beer.session_id != post.session_id:
+            abort(403)
+
+        old_label = session_beer.label
+        session_beer.drink_time_seconds = new_time
+        session_beer.is_vdl = False
+
+        # Recalculate auto-VDL for entire session
+        session_obj = db.session.get(DrinkingSession, post.session_id)
+        fastest = session_obj.fastest_time()
+        for sb in session_obj.beers:
+            if (sb.drink_time_seconds is not None
+                    and fastest is not None
+                    and sb.drink_time_seconds > fastest
+                    and (sb.beer_count or 1) == 1):
+                sb.is_vdl = True
+            elif sb.drink_time_seconds is not None and (sb.beer_count or 1) == 1:
+                sb.is_vdl = False
+
+        # Update post's fastest time
+        post.drink_time_seconds = session_obj.fastest_time()
+        post.is_vdl = (post.drink_time_seconds is None)
+
+        # Recalculate PB ranks for this category
+        recalculate_pb_ranks(current_user.id, old_label)
+    else:
+        # Simple (non-session) post
+        post.drink_time_seconds = new_time
+        post.is_vdl = False
+
+    db.session.commit()
+    return jsonify({'success': True, 'new_time': f'{new_time:.3f}s'})
 
 
 @bp.route('/<int:id>/delete', methods=['POST'])

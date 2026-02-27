@@ -111,6 +111,29 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Post menu dropdown (three-dot menu on post cards)
+    document.addEventListener('click', function(e) {
+        var menuBtn = e.target.closest('.post-menu-btn');
+        if (menuBtn) {
+            e.preventDefault();
+            e.stopPropagation();
+            var wrapper = menuBtn.closest('.post-menu-wrapper');
+            var dropdown = wrapper.querySelector('.post-menu-dropdown');
+            // Close all other open menus first
+            document.querySelectorAll('.post-menu-dropdown').forEach(function(d) {
+                if (d !== dropdown) d.classList.add('hidden');
+            });
+            dropdown.classList.toggle('hidden');
+            return;
+        }
+        // Close all menus when clicking elsewhere
+        if (!e.target.closest('.post-menu-dropdown')) {
+            document.querySelectorAll('.post-menu-dropdown').forEach(function(d) {
+                d.classList.add('hidden');
+            });
+        }
+    });
+
     // Prevent double form submissions
     document.addEventListener('submit', function(e) {
         var form = e.target;
