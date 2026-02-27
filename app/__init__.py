@@ -1,7 +1,7 @@
 import os
 import logging
 from flask import Flask, render_template, jsonify, request, send_from_directory
-from .extensions import db, migrate, login_manager, csrf, limiter
+from .extensions import db, migrate, login_manager, csrf, limiter, cache
 from config import Config
 
 
@@ -27,6 +27,9 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
     csrf.init_app(app)
     limiter.init_app(app)
+    app.config.setdefault('CACHE_TYPE', 'SimpleCache')
+    app.config.setdefault('CACHE_DEFAULT_TIMEOUT', 300)
+    cache.init_app(app)
 
     login_manager.login_view = 'auth.login'
     login_manager.login_message = 'Please log in to access this page.'
@@ -81,22 +84,26 @@ def create_app(config_class=Config):
             return _url_for('uploaded_file', filename=filename)
         return ''
 
-    # ── Context processor (optimised: single query) ──────
+    # ── Context processor (cached notification count) ────
     @app.context_processor
     def inject_notifications():
         from flask_login import current_user as cu
         if cu.is_authenticated:
-            from .models import GroupMember, GroupJoinRequest
-            count = db.session.query(db.func.count(GroupJoinRequest.id)).join(
-                GroupMember,
-                db.and_(
-                    GroupMember.group_id == GroupJoinRequest.group_id,
-                    GroupMember.user_id == cu.id,
-                    GroupMember.role == 'admin',
-                )
-            ).filter(
-                GroupJoinRequest.status == 'pending'
-            ).scalar() or 0
+            cache_key = f'notif_count:{cu.id}'
+            count = cache.get(cache_key)
+            if count is None:
+                from .models import GroupMember, GroupJoinRequest
+                count = db.session.query(db.func.count(GroupJoinRequest.id)).join(
+                    GroupMember,
+                    db.and_(
+                        GroupMember.group_id == GroupJoinRequest.group_id,
+                        GroupMember.user_id == cu.id,
+                        GroupMember.role == 'admin',
+                    )
+                ).filter(
+                    GroupJoinRequest.status == 'pending'
+                ).scalar() or 0
+                cache.set(cache_key, count, timeout=60)
             return {'group_notification_count': count}
         return {'group_notification_count': 0}
 
@@ -127,6 +134,10 @@ def create_app(config_class=Config):
             return jsonify(error='Too many requests. Please slow down.'), 429
         return render_template('errors/429.html'), 429
 
+    # ── CLI commands ────────────────────────────────────────
+    from .cli import seed_achievements
+    app.cli.add_command(seed_achievements)
+
     # ── Database init & upload folder ─────────────────────
     with app.app_context():
         db.create_all()
@@ -137,82 +148,16 @@ def create_app(config_class=Config):
             db.session.execute(db.text('PRAGMA synchronous=NORMAL'))
             db.session.commit()
 
-            # Ensure new columns exist (fallback if migration didn't run)
-            for col_name, col_def in [
-                ('countdown_enabled', 'BOOLEAN DEFAULT 0'),
-                ('hide_own_posts', 'BOOLEAN DEFAULT 0'),
-            ]:
-                try:
-                    db.session.execute(db.text(f'SELECT {col_name} FROM users LIMIT 1'))
-                    db.session.rollback()
-                except Exception:
-                    db.session.rollback()
-                    db.session.execute(db.text(
-                        f'ALTER TABLE users ADD COLUMN {col_name} {col_def}'
-                    ))
-                    db.session.commit()
-                    logger.info(f'Added missing {col_name} column')
-
-        # Seed tiered achievements
-        from .models import Achievement, UserAchievement
-        _achievements = [
-            # Bier tiers (total beers posted)
-            ('bier_1', 'Eerste Bier', '🍺', 'Post je eerste bier'),
-            ('bier_10', '10 Bieren', '🍺', 'Post 10 bieren'),
-            ('bier_100', 'Centurion', '🍺', 'Post 100 bieren'),
-            ('bier_500', 'Legende', '🍺', 'Post 500 bieren'),
-            ('bier_1000', 'Machine', '🍺', 'Post 1000 bieren'),
-            ('bier_2000', 'GOAT', '🍺', 'Post 2000 bieren'),
-            # Speed tiers (fastest single time)
-            ('speed_5', 'Vlugge Slok', '🏃', 'Onder 5 seconden'),
-            ('speed_3', 'Snelheidsduivel', '🏃', 'Onder 3 seconden'),
-            ('speed_2', 'Bliksem', '🏃', 'Onder 2 seconden'),
-            ('speed_1.5', 'Onmenselijk', '🏃', 'Onder 1.5 seconden'),
-            # Social tiers (connections)
-            ('social_1', 'Eerste Maat', '🫂', 'Verbind met 1 persoon'),
-            ('social_5', 'Sociaal', '🫂', 'Verbind met 5 mensen'),
-            ('social_10', 'Populair', '🫂', 'Verbind met 10 mensen'),
-            ('social_25', 'Influencer', '🫂', 'Verbind met 25 mensen'),
-            # Streak tiers (consecutive days posting)
-            ('streak_3', 'Hat Trick', '🎯', '3 dagen op rij'),
-            ('streak_7', 'Volle Week', '🎯', '7 dagen op rij'),
-            ('streak_14', 'Twee Weken', '🎯', '14 dagen op rij'),
-            ('streak_30', 'IJzeren Wil', '🎯', '30 dagen op rij'),
-            # PB tiers (personal bests beaten)
-            ('pb_1', 'Recordbreker', '🥇', 'Versla je PR'),
-            ('pb_5', 'PR Jager', '🥇', 'Versla je PR 5 keer'),
-            ('pb_10', 'PR Machine', '🥇', 'Versla je PR 10 keer'),
-            ('pb_25', 'PR Legende', '🥇', 'Versla je PR 25 keer'),
-            # Challenge tiers (Kan/Spies/etc completed)
-            ('challenge_1', 'Uitdager', '🏆', 'Voltooi een challenge'),
-            ('challenge_5', 'Veteraan', '🏆', 'Voltooi 5 challenges'),
-            ('challenge_10', 'Kampioen', '🏆', 'Voltooi 10 challenges'),
-            ('challenge_25', 'Meester', '🏆', 'Voltooi 25 challenges'),
-            # Weekly tiers (posts in one week)
-            ('weekly_5', 'On Fire', '🔥', '5 posts in één week'),
-            ('weekly_10', 'Vlammend', '🔥', '10 posts in één week'),
-            ('weekly_20', 'Inferno', '🔥', '20 posts in één week'),
-            # Competition winner tiers
-            ('comp_win_1', 'Eerste Overwinning', '🏆', 'Win je eerste competitie'),
-            ('comp_win_3', 'Competitiebeest', '🏆', 'Win 3 competities'),
-            ('comp_win_10', 'Onverslaanbaar', '🏆', 'Win 10 competities'),
-        ]
-        new_slugs = {slug for slug, _, _, _ in _achievements}
-        # Remove old non-tiered achievements
-        old_achs = Achievement.query.filter(~Achievement.slug.in_(new_slugs)).all()
-        for old in old_achs:
-            UserAchievement.query.filter_by(achievement_slug=old.slug).delete()
-            db.session.delete(old)
-        # Add new achievements
-        for slug, name, icon, desc in _achievements:
-            existing = Achievement.query.filter_by(slug=slug).first()
-            if existing:
-                existing.name = name
-                existing.icon = icon
-                existing.description = desc
-            else:
-                db.session.add(Achievement(slug=slug, name=name, icon=icon, description=desc))
-        db.session.commit()
+        # Auto-seed achievements if table is empty (first deploy)
+        from .models import Achievement
+        if Achievement.query.count() == 0:
+            from .cli import seed_achievements_data
+            seed_achievements_data()
+            logger.info('Achievements auto-seeded (first run)')
+        else:
+            # Always upsert to keep definitions in sync
+            from .cli import seed_achievements_data
+            seed_achievements_data()
 
     logger.info('VEAU app initialised')
     return app

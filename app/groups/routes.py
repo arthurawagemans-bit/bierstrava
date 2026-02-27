@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from flask import render_template, redirect, url_for, flash, abort, current_app, request
 from flask_login import login_required, current_user
 from . import bp
-from ..extensions import db
+from ..extensions import db, cache
 from ..models import Group, GroupMember, GroupJoinRequest, BeerPost, BeerPostGroup, User, Competition
 from .forms import CreateGroupForm, EditGroupForm
 from ..posts.utils import process_upload
@@ -346,6 +346,10 @@ def approve_request(id, request_id):
     member = GroupMember(user_id=join_req.user_id, group_id=group.id, role='member')
     db.session.add(member)
     db.session.commit()
+    # Invalidate notification cache for all group admins
+    admins = GroupMember.query.filter_by(group_id=group.id, role='admin').all()
+    for a in admins:
+        cache.delete(f'notif_count:{a.user_id}')
     flash(f'{join_req.user.display_name} is toegevoegd aan de groep.', 'success')
     return redirect(url_for('groups.invite', id=group.id))
 
@@ -363,6 +367,10 @@ def reject_request(id, request_id):
 
     join_req.status = 'rejected'
     db.session.commit()
+    # Invalidate notification cache for all group admins
+    admins = GroupMember.query.filter_by(group_id=group.id, role='admin').all()
+    for a in admins:
+        cache.delete(f'notif_count:{a.user_id}')
     flash('Verzoek afgewezen.', 'success')
     return redirect(url_for('groups.invite', id=group.id))
 

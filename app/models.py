@@ -382,6 +382,10 @@ class Comment(db.Model):
     body = db.Column(db.String(500), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+    __table_args__ = (
+        db.Index('idx_comment_post_created', 'post_id', 'created_at'),
+    )
+
 
 ALLOWED_REACTIONS = {'fire', 'strong', 'party', 'laugh'}
 

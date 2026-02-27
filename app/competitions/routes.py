@@ -1,6 +1,7 @@
 from datetime import datetime
 from flask import render_template, redirect, url_for, flash, abort
 from flask_login import login_required, current_user
+from sqlalchemy.orm import joinedload
 from . import bp
 from ..extensions import db
 from ..models import (Group, GroupMember, Competition, CompetitionParticipant,
@@ -71,14 +72,12 @@ def detail(id):
     if not group.is_member(current_user):
         abort(403)
 
-    # Participants sorted by beer_count desc
-    participants = CompetitionParticipant.query.filter_by(
+    # Participants sorted by beer_count desc (eager-load users in single query)
+    participants = CompetitionParticipant.query.options(
+        joinedload(CompetitionParticipant.user)
+    ).filter_by(
         competition_id=comp.id
     ).order_by(CompetitionParticipant.beer_count.desc()).all()
-
-    # Eager-load user info
-    for p in participants:
-        _ = p.user  # trigger lazy load
 
     # Auto-join if group member but not yet participant
     is_participant = comp.is_participant(current_user)

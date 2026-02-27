@@ -151,19 +151,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Infinite scroll for feed
     window.setupInfiniteScroll = function(containerSelector, url, pageParam) {
-        let currentPage = 1;
-        let loading = false;
-        let hasMore = true;
-        const container = document.querySelector(containerSelector);
+        var MAX_PAGES = 50;
+        var currentPage = 1;
+        var loading = false;
+        var hasMore = true;
+        var container = document.querySelector(containerSelector);
         if (!container) return;
 
-        const sentinel = document.createElement('div');
+        var sentinel = document.createElement('div');
         sentinel.className = 'flex justify-center py-6';
         sentinel.id = 'scroll-sentinel';
         container.after(sentinel);
 
-        const observer = new IntersectionObserver(function(entries) {
-            if (entries[0].isIntersecting && !loading && hasMore) {
+        var observer = new IntersectionObserver(function(entries) {
+            if (entries[0].isIntersecting && !loading && hasMore && currentPage < MAX_PAGES) {
                 loading = true;
                 currentPage++;
                 sentinel.innerHTML = '<div class="loading-spinner"></div>';
@@ -179,8 +180,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else {
                         hasMore = false;
                     }
-                    sentinel.innerHTML = hasMore ? '' : '<p class="text-gray-400 text-sm">Geen berichten meer</p>';
+                    if (!hasMore || currentPage >= MAX_PAGES) {
+                        sentinel.innerHTML = '<p class="text-gray-400 text-sm">Geen berichten meer</p>';
+                        observer.disconnect();
+                    } else {
+                        sentinel.innerHTML = '';
+                    }
                     loading = false;
+                })
+                .catch(function() {
+                    // Network error — allow retry on next scroll
+                    loading = false;
+                    sentinel.innerHTML = '<p class="text-gray-400 text-sm">Laden mislukt, scroll om opnieuw te proberen</p>';
                 });
             }
         }, { rootMargin: '200px' });

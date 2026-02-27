@@ -8,6 +8,7 @@ from ..models import (User, Connection, BeerPost, SessionBeer, DrinkingSession,
                       Like, Comment, Achievement, UserAchievement, Competition)
 from .forms import EditProfileForm
 from ..posts.utils import process_upload
+from ..services.stats import calculate_max_streak, get_user_achievement_stats
 from datetime import datetime, date as dt_date, timedelta
 
 
@@ -105,72 +106,18 @@ def view(username):
                 'description': a.description, 'earned': a.slug in earned_slugs,
             })
 
-    # Compute progress values per category
+    # Compute progress values per category using shared service
     progress = {}
-    if can_view and stats:
-        progress['bier'] = stats['total_beers']
     if can_view:
-        progress['social'] = user.connection_count()
-        # PB count
-        progress['pb'] = db.session.query(db.func.count(SessionBeer.id)).join(
-            DrinkingSession
-        ).filter(
-            DrinkingSession.user_id == user.id,
-            SessionBeer.is_pb == True
-        ).scalar() or 0
-        # Challenge count
-        challenge_labels = ['Kan', 'Spies', 'Golden Triangle',
-                            'Platinum Triangle', '1/2 Krat', 'Krat']
-        progress['challenge'] = db.session.query(db.func.count(SessionBeer.id)).join(
-            DrinkingSession
-        ).filter(
-            DrinkingSession.user_id == user.id,
-            SessionBeer.label.in_(challenge_labels),
-            SessionBeer.drink_time_seconds.isnot(None)
-        ).scalar() or 0
-        # Weekly posts (last 7 days)
-        week_ago = datetime.utcnow() - timedelta(days=7)
-        progress['weekly'] = BeerPost.query.filter(
-            BeerPost.user_id == user.id,
-            BeerPost.created_at >= week_ago
-        ).count()
-        # Fastest time (for speed — lower is better, display as value)
-        fastest = db.session.query(db.func.min(SessionBeer.drink_time_seconds)).join(
-            DrinkingSession
-        ).filter(
-            DrinkingSession.user_id == user.id,
-            SessionBeer.drink_time_seconds.isnot(None)
-        ).scalar()
-        progress['speed'] = round(fastest, 2) if fastest else None
-        # Max streak
-        recent_dates = db.session.query(
-            db.func.date(BeerPost.created_at)
-        ).filter(BeerPost.user_id == user.id).distinct().order_by(
-            db.func.date(BeerPost.created_at).desc()
-        ).limit(60).all()
-        dates = []
-        for r in recent_dates:
-            d = r[0] if isinstance(r[0], str) else str(r[0])
-            try:
-                dates.append(dt_date.fromisoformat(d))
-            except (ValueError, TypeError):
-                pass
-        max_streak = 0
-        if dates:
-            streak = 1
-            for i in range(1, len(dates)):
-                if (dates[i - 1] - dates[i]).days == 1:
-                    streak += 1
-                else:
-                    streak = 1
-                if streak > max_streak:
-                    max_streak = streak
-            max_streak = max(max_streak, 1)
-        progress['streak'] = max_streak
-        # Competition wins
-        progress['comp_win'] = Competition.query.filter_by(
-            winner_id=user.id, status='completed'
-        ).count()
+        ach_stats = get_user_achievement_stats(user.id)
+        progress['bier'] = ach_stats['total_beers']
+        progress['social'] = ach_stats['conn_count']
+        progress['pb'] = ach_stats['pb_count']
+        progress['challenge'] = ach_stats['challenge_count']
+        progress['weekly'] = ach_stats['week_posts']
+        progress['speed'] = round(ach_stats['fastest'], 2) if ach_stats['fastest'] else None
+        progress['streak'] = ach_stats['max_streak']
+        progress['comp_win'] = ach_stats['comp_wins']
 
     # Build final categories list for template
     achievement_cats = []

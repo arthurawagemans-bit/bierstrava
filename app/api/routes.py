@@ -10,7 +10,7 @@ from sqlalchemy.exc import IntegrityError
 from flask import jsonify, request, abort, render_template, current_app, send_file
 from flask_login import login_required, current_user
 from . import bp
-from ..extensions import db, limiter
+from ..extensions import db, limiter, cache
 from ..models import (BeerPost, Like, Comment, Reaction, ALLOWED_REACTIONS,
                       User, Group, Tag, Connection, GroupMember, GroupJoinRequest,
                       CompetitionBeer, CompetitionParticipant)
@@ -315,6 +315,10 @@ def api_join_group(id):
     db.session.add(req)
     try:
         db.session.commit()
+        # Invalidate notification cache for group admins
+        admins = GroupMember.query.filter_by(group_id=group.id, role='admin').all()
+        for a in admins:
+            cache.delete(f'notif_count:{a.user_id}')
     except IntegrityError:
         db.session.rollback()
         return jsonify(success=True, status='requested')

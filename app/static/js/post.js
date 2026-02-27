@@ -312,26 +312,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
         sessionBeerList.innerHTML = html;
 
-        // Attach remove handlers
-        document.querySelectorAll('.session-remove-beer').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                sessionBeers.splice(parseInt(this.dataset.index), 1);
-                renderSessionBeerList();
-            });
-        });
-
-        // Attach note input handlers
-        document.querySelectorAll('.session-note-input').forEach(function(input) {
-            input.addEventListener('input', function() {
-                var idx = parseInt(this.dataset.noteIndex);
-                sessionBeers[idx].note = this.value;
-                // Update hidden input live (no re-render to keep focus)
-                if (sessionBeersInput) {
-                    sessionBeersInput.value = JSON.stringify(sessionBeers);
-                }
-            });
-        });
-
         // Re-initialize mentions on new inputs
         if (window.initMentions) {
             window.initMentions();
@@ -347,6 +327,27 @@ document.addEventListener('DOMContentLoaded', function() {
         if (countEl) {
             countEl.textContent = totalBeers + ' bier' + (totalBeers !== 1 ? 'en' : '');
         }
+    }
+
+    // ── Event delegation for session beer list (avoids listener stacking) ──
+    if (sessionBeerList) {
+        sessionBeerList.addEventListener('click', function(e) {
+            var removeBtn = e.target.closest('.session-remove-beer');
+            if (removeBtn) {
+                sessionBeers.splice(parseInt(removeBtn.dataset.index), 1);
+                renderSessionBeerList();
+            }
+        });
+        sessionBeerList.addEventListener('input', function(e) {
+            var noteInput = e.target.closest('.session-note-input');
+            if (noteInput) {
+                var idx = parseInt(noteInput.dataset.noteIndex);
+                sessionBeers[idx].note = noteInput.value;
+                if (sessionBeersInput) {
+                    sessionBeersInput.value = JSON.stringify(sessionBeers);
+                }
+            }
+        });
     }
 
     // ── Timer screen tap handler ──
