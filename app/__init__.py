@@ -138,16 +138,20 @@ def create_app(config_class=Config):
             db.session.commit()
 
             # Ensure new columns exist (fallback if migration didn't run)
-            try:
-                db.session.execute(db.text('SELECT countdown_enabled FROM users LIMIT 1'))
-                db.session.rollback()
-            except Exception:
-                db.session.rollback()
-                db.session.execute(db.text(
-                    'ALTER TABLE users ADD COLUMN countdown_enabled BOOLEAN DEFAULT 0'
-                ))
-                db.session.commit()
-                logger.info('Added missing countdown_enabled column')
+            for col_name, col_def in [
+                ('countdown_enabled', 'BOOLEAN DEFAULT 0'),
+                ('hide_own_posts', 'BOOLEAN DEFAULT 0'),
+            ]:
+                try:
+                    db.session.execute(db.text(f'SELECT {col_name} FROM users LIMIT 1'))
+                    db.session.rollback()
+                except Exception:
+                    db.session.rollback()
+                    db.session.execute(db.text(
+                        f'ALTER TABLE users ADD COLUMN {col_name} {col_def}'
+                    ))
+                    db.session.commit()
+                    logger.info(f'Added missing {col_name} column')
 
         # Seed tiered achievements
         from .models import Achievement, UserAchievement
